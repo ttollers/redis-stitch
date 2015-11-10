@@ -1,0 +1,10 @@
+branch-defaults:
+  default:
+    environment: presentation-service-d
+global:
+  application_name: presentation-service
+  default_ec2_keyname: generator
+  default_platform: Node.js
+  default_region: eu-west-1
+  profile: eb-cli
+  sc: null

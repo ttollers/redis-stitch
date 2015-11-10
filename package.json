@@ -1,0 +1,21 @@
+{
+  "name": "presentation-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --recursive",
+    "start": "node server.js"
+  },
+  "author": "Dayo Adeyemi <thedayoadeyemi@gmail.com> (https://github.com/dayoadeyemi)",
+  "license": "ISC",
+  "dependencies": {
+    "highland": "^2.5.1",
+    "ramda": "^0.18.0",
+    "redis": "^2.3.0",
+    "restify": "^4.0.3"
+  }
+}
