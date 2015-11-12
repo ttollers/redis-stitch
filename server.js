@@ -21,6 +21,8 @@ server.use(function crossOrigin(req,res,next){
     return next();
 });
 
+server.use(restify.queryParser());
+
 //activate API verions here
 useAPI('v1', server);
 

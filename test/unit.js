@@ -7,10 +7,24 @@ var hl = require('highland');
 var request = require('supertest');
 var restify = require('restify');
 
-var db;
+var db = {};
 v1.__set__('db',{
     getKey(key){
-        return hl([db[key]|| null]);
+        if (db[key] === void 0) return hl([null]);
+        else if (R.is(String, db[key])) return hl([db[key]]);
+        else {
+            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+            e.code = 'WRONGTYPE';
+            return hl(push =>  push(e))
+        }
+    },
+    listKey(key){
+        if (R.is(Array, db[key])) return hl([R.pluck(1, db[key])]);
+        else {
+            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+            e.code = 'WRONGTYPE';
+            return hl(push =>  push(e))
+        }
     },
     setKey(key, value){
         db[key] = value;
@@ -20,7 +34,31 @@ v1.__set__('db',{
         var output = R.has(key, db) ? 1 : 0;
         delete db[key];
         return hl([output]);
-    }
+    },
+    addToKey(key, score, value){
+        try {
+            db[key] = db[key] || [];
+            db[key].push([score, value]);
+            db[key] = R.sortBy(R.prop(0), db[key]);
+            return hl(["OK"]);
+        } catch (e) {
+            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+            e.code = 'WRONGTYPE';
+            return hl(push =>  push(e))
+        }
+    },
+    delFromKey(key, value){
+        if (db[key] == void 0) return 0;
+        else if (R.is(Array, db[key])) {
+            var l = db[key].length;
+            db[key] = R.reject(xs => xs[1] === value, db[key]);
+            return hl([l - db[key].length]);
+        } else {
+            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+            e.code = 'WRONGTYPE';
+            return hl(push =>  push(e))
+        }
+    },
 });
 
 describe('unit tests', () => {
@@ -32,6 +70,15 @@ describe('unit tests', () => {
             db = { key: 'value' };
             hydrateKey({}, 'key')
                 .map(value => assert.equal(value, 'value'))
+                .pull(done)
+        });
+
+        it('should pluck values which are list values ', (done) => {
+            db = { key: [
+                [0, 'value1'],
+                [1, 'value2']] };
+            hydrateKey({}, 'key')
+                .map(value => assert.equal(value, '[value1,value2]'))
                 .pull(done)
         });
 
@@ -48,7 +95,7 @@ describe('unit tests', () => {
                 .pull((err, data) => {
                     assert.notOk(data);
                     assert.ok(err, 'there is an error');
-                    assert.ok(err.body, 'it is a HttpError');
+                    assert.ok(err.body, err);
                     assert.equal(err.statusCode, 404, 'it is a 404');
                     done()
                 })
@@ -104,6 +151,7 @@ describe('unit tests', () => {
     describe('v1 api', () => {
         var restify = require('restify');
         var app = restify.createServer();
+        app.use(restify.queryParser());
         app.get(/.*/, v1.get);
         app.put(/.*/, v1.put);
         app.del(/.*/, v1.del);
@@ -116,11 +164,28 @@ describe('unit tests', () => {
                     .end(done);
             });
 
-            it('should get the data saved in redis', (done) => {
+            it('should get string data saved in redis', (done) => {
                 db = { '/v1/hello/world': 'my value' };
                 request(app)
                     .get('/v1/hello/world')
                     .expect(200, 'my value')
+                    .end(done);
+            });
+
+            it('should get list data saved in redis', (done) => {
+                db = {
+                    '/v1/hello/world': 'my value',
+                    '/v1/hello/world2': 'my value2',
+                    '/v1/hello/world3': 'my value3',
+                    '/v1/list': [
+                        [0,'${/v1/hello/world}'],
+                        [1,'${/v1/hello/world2}'],
+                        [2,'${/v1/hello/world3}']
+                    ]
+                };
+                request(app)
+                    .get('/v1/list')
+                    .expect(200, '[my value,my value2,my value3]')
                     .end(done);
             });
         });
@@ -134,6 +199,16 @@ describe('unit tests', () => {
                     .expect(() => assert.equal(db['/v1/hello/world'], 'my value'))
                     .end(done);
             });
+
+            it('should put a value into a list the db', (done) => {
+                request(app)
+                    .put('/v1/hello/world')
+                    .query({ score: 0 })
+                    .send('my value')
+                    .expect(204)
+                    .expect(() => assert.deepEqual(db['/v1/hello/world'], [[0,'my value']]))
+                    .end(done);
+            });
         });
 
         describe('del', () => {
@@ -143,6 +218,33 @@ describe('unit tests', () => {
                     .del('/v1/hello/world')
                     .expect(204)
                     .expect(() => assert.notOk(db['/v1/hello/world']))
+                    .end(done);
+            });
+
+            it('should delete values from a list in the db', (done) => {
+                db = {
+                    '/v1/hello/world': 'my value',
+                    '/v1/hello/world2': 'my value2',
+                    '/v1/hello/world3': 'my value3',
+                    '/v1/list': [
+                        [0,'${/v1/hello/world}'],
+                        [1,'${/v1/hello/world2}'],
+                        [2,'${/v1/hello/world3}']
+                    ]
+                };
+                request(app)
+                    .del('/v1/list')
+                    .expect(204)
+                    .query({ value: '${/v1/hello/world2}' })
+                    .expect(() => assert.deepEqual(db, {
+                        '/v1/hello/world': 'my value',
+                        '/v1/hello/world2': 'my value2',
+                        '/v1/hello/world3': 'my value3',
+                        '/v1/list': [
+                            [0,'${/v1/hello/world}'],
+                            [2,'${/v1/hello/world3}']
+                        ]
+                    }))
                     .end(done);
             });
         });
