@@ -68,7 +68,7 @@ describe('unit tests', () => {
 
         it('should pluck values which are plain string', (done) => {
             db = { key: 'value' };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'value'))
                 .pull(done)
         });
@@ -77,21 +77,21 @@ describe('unit tests', () => {
             db = { key: [
                 [0, 'value1'],
                 [1, 'value2']] };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, '[value1,value2]'))
                 .pull(done)
         });
 
         it('should pull from local if it can', (done) => {
             db = { key: 'value' };
-            hydrateKey({ key: 'local' }, 'key')
+            hydrateKey({ key: 'local' }, 'key', [])
                 .map(value => assert.equal(value, 'local'))
                 .pull(done)
         });
 
         it('should error when there is no data', (done) => {
             db = {};
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .pull((err, data) => {
                     assert.notOk(data);
                     assert.ok(err, 'there is an error');
@@ -106,7 +106,7 @@ describe('unit tests', () => {
                 key: 'hello ${area}',
                 area: 'world'
             };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'hello world'))
                 .pull(done)
         });
@@ -117,9 +117,34 @@ describe('unit tests', () => {
                 area: 'my ${place}',
                 place: 'world'
             };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'welcome to my world'))
                 .pull(done)
+        });
+
+        it('should hydrate part containing ${ref,prop,subprop}', (done) => {
+            db = {
+                key: 'step 1: ${steps,one}, step 2: ${steps,two}, step 3: Profit',
+                steps: '{"one": "write a fan-fiction", "two": "make movie of it" }'
+            };
+            hydrateKey({}, 'key', [])
+                .map(value => assert.equal(value, 'step 1: write a fan-fiction, step 2: make movie of it, step 3: Profit'))
+                .pull(done)
+        });
+
+        it('should error if a prop doesn\'t exist', (done) => {
+            db = {
+                key: 'welcome to ${area,one}',
+                area: '{}'
+            };
+            hydrateKey({}, 'key', [])
+                .pull((err, data) => {
+                    assert.notOk(data);
+                    assert.ok(err, 'there is an error');
+                    assert.ok(err.body, err);
+                    assert.equal(err.statusCode, 404, 'it is a 404');
+                    done()
+                })
         });
 
         it('should hydrate multiple values which contain ${ref}', (done) => {
@@ -129,14 +154,14 @@ describe('unit tests', () => {
                 compliment: 'great',
                 timePeriod: 'day'
             };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'hello world, it is such a great day'))
                 .pull(done)
         });
 
         it('should error when there is cycle', (done) => {
             db = { key: '${key}' };
-            hydrateKey({}, 'key')
+            hydrateKey({}, 'key', [])
                 .pull((err, data) => {
                     assert.notOk(data);
                     assert.ok(err, 'there is an error');
