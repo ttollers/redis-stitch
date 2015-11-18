@@ -111,6 +111,24 @@ describe('unit tests', () => {
                 .pull(done)
         });
 
+        it('should return the default value from ${ref|def} if ref doesn\'t exist', (done) => {
+            db = {
+                key: 'hello ${area;nothing}'
+            };
+            hydrateKey({}, 'key', [])
+                .map(value => assert.equal(value, 'hello nothing'))
+                .pull(done)
+        });
+
+        it('should return the default value from ${ref|def} if ref doesn\'t exist even if this is the string "null"', (done) => {
+            db = {
+                key: 'hello ${area;null}'
+            };
+            hydrateKey({}, 'key', [])
+                .map(value => assert.equal(value, 'hello null'))
+                .pull(done)
+        });
+
         it('should deep hydrate values which contain ${ref}', (done) => {
             db = {
                 key: 'welcome to ${area}',
@@ -124,8 +142,8 @@ describe('unit tests', () => {
 
         it('should hydrate part containing ${ref,prop,subprop}', (done) => {
             db = {
-                key: 'step 1: ${steps,one}, step 2: ${steps,two}, step 3: Profit',
-                steps: '{"one": "write a fan-fiction", "two": "make movie of it" }'
+                key: 'step 1: ${steps,one}, step 2: ${steps,two,three}, step 3: Profit',
+                steps: '{"one": "write a fan-fiction", "two": { "three": "make movie of it"} }'
             };
             hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'step 1: write a fan-fiction, step 2: make movie of it, step 3: Profit'))
