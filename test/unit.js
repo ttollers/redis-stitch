@@ -58,7 +58,7 @@ v1.__set__('db',{
             e.code = 'WRONGTYPE';
             return hl(push =>  push(e))
         }
-    },
+    }
 });
 
 describe('unit tests', () => {
