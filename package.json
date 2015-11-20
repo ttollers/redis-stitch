@@ -2,7 +2,7 @@
   "name": "presentation-service",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "sdk.js",
   "directories": {
     "test": "test"
   },
