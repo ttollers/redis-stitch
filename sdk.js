@@ -75,10 +75,8 @@ module.exports = function(presentationServiceUrl){
         app.del(/.*/, v1.del);
 
         return {
-            db: {
-                get(){ return db; },
-                set(_db){ db = _db; }
-            },
+            get db(){ return db; },
+            set db(_db){ db = _db; },
             put: function(key, value){
                 return hl.wrapCallback(function(done){
                     supertest(app)
