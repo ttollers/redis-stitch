@@ -5,17 +5,34 @@ var R = require('ramda');
 var hl = require('highland');
 
 module.exports = function(presentationServiceUrl){
+    var request;
+    var catchRestErr = function(cb){
+        return function(err, res){
+            var output, e;
+            if(err) return cb(err);
+            else if (res.statusCode===200) {
+                try {
+                    output = JSON.parse(res.text);
+                } catch (e) {
+                    output = res.text;
+                }
+                return cb(null, output);
+            } else if (res.statusCode===204) {
+                return cb(null, 'done');
+            } else {
+                var e = new Error(res.body.message);
+                e.code = res.body.code;
+                return cb(e);
+            }
+        }
+    };
     if (R.isNil(presentationServiceUrl)){
         var rewire = require('rewire');
         var db = {};
         var v1 = rewire('./lib/v1');
-        var supertest = require('supertest');
+        var request = require('supertest');
         var restify = require('restify');
         var app = restify.createServer();
-        var catchErr = function(res){
-            if (res.statusCode>=200 && res.statusCode<300) return res.body;
-            else throw new Error(res.body);
-        };
         v1.__set__('db',{
             getKey(key){
                 if (db[key] === void 0) return hl([null]);
@@ -27,8 +44,15 @@ module.exports = function(presentationServiceUrl){
                 }
             },
             listKey(key){
-                if (R.is(Array, db[key])) return hl([R.pluck(1, db[key])]);
-                else {
+                if (db[key] == void 0) return hl([]);
+                else if (!R.is(String, db[key])){
+                    return hl.pairs(db[key])
+                        .sortBy(function(a, b){
+                            return a[1] - b[1];
+                        })
+                        .pluck(0)
+                        .collect();
+                } else {
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
                     return hl(push =>  push(e))
@@ -44,23 +68,25 @@ module.exports = function(presentationServiceUrl){
                 return hl([output]);
             },
             addToKey(key, score, value){
-                try {
-                    db[key] = db[key] || [];
-                    db[key].push([score, value]);
-                    db[key] = R.sortBy(R.prop(0), db[key]);
+                if (db[key] === void 0) db[key] = {};
+                if (!R.is(String, db[key])){
+                    db[key][value] = score;
                     return hl(["OK"]);
-                } catch (e) {
-                    e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+                } else{
+                    var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
                     return hl(push =>  push(e))
                 }
             },
             delFromKey(key, value){
-                if (db[key] == void 0) return 0;
-                else if (R.is(Array, db[key])) {
-                    var l = db[key].length;
-                    db[key] = R.reject(xs => xs[1] === value, db[key]);
-                    return hl([l - db[key].length]);
+                if (db[key] == void 0) return hl([0]);
+                else if (!R.is(String, db[key])){
+                    if (R.isNil(db[key][value])){
+                        return hl([0]);
+                    } else {
+                        delete db[key][value];
+                        return hl([1]);
+                    }
                 } else {
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
@@ -75,92 +101,71 @@ module.exports = function(presentationServiceUrl){
         app.del(/.*/, v1.del);
 
         return {
-            get db(){ return db; },
-            set db(_db){ db = _db; },
-            put: function(key, value){
-                return hl.wrapCallback(function(done){
-                    supertest(app)
-                        .put(key)
-                        .send(value)
-                        .end(done);
-                })
-                .map(catchErr);
-            },
-            del: function(key){
-                return hl.wrapCallback(function(done){
-                    supertest(app)
-                        .del(key)
-                        .end(done);
-                })
-                .map(catchErr);
-            },
-            add: function(key, score, value){
-                return hl.wrapCallback(function(done){
-                    supertest(app)
-                        .put(key)
-                        .query({ score: score })
-                        .send(value)
-                        .end(done);
-                })
-                .map(catchErr);
-            },
-            rem: function(key, value){
-                return hl.wrapCallback(function(done){
-                    supertest(app)
-                        .del(key)
-                        .query({ value: value })
-                        .end(done);
-                })
-                .map(catchErr);
-            },
-            get: function(key){
-                return hl.wrapCallback(function(done){
-                    supertest(app)
-                        .get(key)
-                        .end(done);
-                })
-                .map(catchErr);
-            }
+            get db(){ return db },
+            set db(_db){ db = _db },
+            put: hl.wrapCallback(function(key, value, cb){
+                request(app)
+                    .put(key)
+                    .send(value)
+                    .end(catchRestErr(cb))
+            }),
+            del: hl.wrapCallback(function(key, cb){
+                request(app)
+                    .del(key)
+                    .end(catchRestErr(cb))
+            }),
+            add: hl.wrapCallback(function(key, score, value, cb){
+                request(app)
+                    .put(key)
+                    .query({ score: score })
+                    .send(value)
+                    .end(catchRestErr(cb))
+            }),
+            rem: hl.wrapCallback(function(key, value, cb){
+                request(app)
+                    .del(key)
+                    .query({ value: value })
+                    .end(catchRestErr(cb))
+            }),
+            get: hl.wrapCallback(function(key, cb){
+                request(app)
+                    .get(key)
+                    .end(catchRestErr(cb))
+            })
         };
     }
     else {
-        var request = function (options){
-            return hl.wrapCallback(require('request'))(options)
-                .map(catchErr);
-        };
+        request = require('superagent');
         return {
-            put: function(key, value){
-                return request({
-                    url: presentationServiceUrl + key,
-                    method: 'PUT',
-                    body: value
-                })
-            },
-            del: function(key){
-                return request({
-                    url: presentationServiceUrl + key,
-                    method: 'DELETE'
-                })
-            },
-            add: function(key, score, value){
-                return request({
-                    url: presentationServiceUrl + key + (score == null?'':'?score='+score),
-                    method: 'PUT',
-                    body: value
-                })
-            },
-            rem: function(key, value){
-                return request({
-                    url: presentationServiceUrl + key + "?value=" + value,
-                    method: 'DELETE'
-                })
-            },
-            get: function(key){
-                return request({
-                    url: presentationServiceUrl + key,
-                    method: 'GET'
-                })
-            }
+            put: hl.wrapCallback(function(key, value, cb){
+                request
+                    .put(presentationServiceUrl + key)
+                    .send(value)
+                    .end(catchRestErr(cb))
+            }),
+            del: hl.wrapCallback(function(key, cb){
+                request
+                    .del(presentationServiceUrl + key)
+                    .end(catchRestErr(cb))
+            }),
+            add: hl.wrapCallback(function(key, score, value, cb){
+                request
+                    .put(presentationServiceUrl + key)
+                    .query({ score: score })
+                    .send(value)
+                    .end(catchRestErr(cb))
+            }),
+            rem: hl.wrapCallback(function(key, value, cb){
+                request
+                    .del(presentationServiceUrl + key)
+                    .query({ value: value })
+                    .end(catchRestErr(cb))
+            }),
+            get: hl.wrapCallback(function(key, cb){
+                request
+                    .get(presentationServiceUrl + key)
+                    .end(catchRestErr(cb))
+            })
         };
     }
 };
