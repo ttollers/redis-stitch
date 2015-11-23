@@ -34,16 +34,16 @@ module.exports = function(presentationServiceUrl){
         var restify = require('restify');
         var app = restify.createServer();
         v1.__set__('db',{
-            getKey(key){
+            getKey: function(key){
                 if (db[key] === void 0) return hl([null]);
                 else if (R.is(String, db[key])) return hl([db[key]]);
                 else {
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
-                    return hl(push =>  push(e))
+                    return hl(function(push){ push(e); push(null, hl.nil) })
                 }
             },
-            listKey(key){
+            listKey: function(key){
                 if (db[key] == void 0) return hl([]);
                 else if (!R.is(String, db[key])){
                     return hl.pairs(db[key])
@@ -55,19 +55,19 @@ module.exports = function(presentationServiceUrl){
                 } else {
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
-                    return hl(push =>  push(e))
+                    return hl(function(push){ push(e); push(null, hl.nil) })
                 }
             },
-            setKey(key, value){
+            setKey: function(key, value){
                 db[key] = value;
                 return hl(["OK"]);
             },
-            delKey(key){
+            delKey: function(key){
                 var output = R.has(key, db) ? 1 : 0;
                 delete db[key];
                 return hl([output]);
             },
-            addToKey(key, score, value){
+            addToKey: function(key, score, value){
                 if (db[key] === void 0) db[key] = {};
                 if (!R.is(String, db[key])){
                     db[key][value] = score;
@@ -75,10 +75,13 @@ module.exports = function(presentationServiceUrl){
                 } else{
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
-                    return hl(push =>  push(e))
+                    return hl(function(push){
+                        push(e);
+                        push(null, hl.nil);
+                    })
                 }
             },
-            delFromKey(key, value){
+            delFromKey: function(key, value){
                 if (db[key] == void 0) return hl([0]);
                 else if (!R.is(String, db[key])){
                     if (R.isNil(db[key][value])){
@@ -90,7 +93,10 @@ module.exports = function(presentationServiceUrl){
                 } else {
                     var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
                     e.code = 'WRONGTYPE';
-                    return hl(push =>  push(e))
+                    return hl(function(push){
+                        push(e);
+                        push(null, hl.nil);
+                    })
                 }
             }
         });
