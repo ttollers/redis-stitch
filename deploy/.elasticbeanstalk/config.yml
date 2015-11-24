@@ -4,7 +4,7 @@ branch-defaults:
 global:
   application_name: presentation-service
   default_ec2_keyname: generator
-  default_platform: Node.js
+  default_platform: Multi-container Docker 1.7.1 (Generic)
   default_region: eu-west-1
   profile: eb-cli
   sc: null

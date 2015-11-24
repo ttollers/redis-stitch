@@ -1,0 +1,33 @@
+{
+    "AWSEBDockerrunVersion": "2",
+    "authentication": {
+        "bucket": "dockercredentials",
+        "key": "docker/config.json"
+    },
+    "containerDefinitions": [{
+        "name": "wetty",
+        "image": "trinitymirror/presentation-service",
+        "essential": "true",
+        "memory": 256,
+        "environment": [{
+            "name": "NODE_ENV",
+            "value": "production"
+        }, {
+            "name": "ENV_SUFFIX",
+            "value": "dev"
+        }, {
+            "name": "CONSUL_URL",
+            "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
+        }, {
+            "name": "REDIS_HOST",
+            "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
+        }, {
+            "name": "REDIS_PORT",
+            "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
+        }],
+        "portMappings": [{
+            "hostPort": "80",
+            "containerPort": "3000"
+        }]
+    }]
+}
