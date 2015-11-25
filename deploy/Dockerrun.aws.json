@@ -5,7 +5,7 @@
         "key": "docker/config.json"
     },
     "containerDefinitions": [{
-        "name": "wetty",
+        "name": "presentation",
         "image": "trinitymirror/presentation-service",
         "essential": "true",
         "memory": 256,
@@ -20,10 +20,10 @@
             "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
         }, {
             "name": "REDIS_HOST",
-            "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
+            "value": "192.168.99.100"
         }, {
             "name": "REDIS_PORT",
-            "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
+            "value": "6379"
         }],
         "portMappings": [{
             "hostPort": "80",
