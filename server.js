@@ -4,7 +4,7 @@
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
-console.log('JC :)', config);
+console.log('config', config);
 
 function useAPI(prefix, server) {
     var api = require('./lib/' + prefix);

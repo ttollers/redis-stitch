@@ -16,18 +16,15 @@
             "name": "ENV_SUFFIX",
             "value": "dev"
         }, {
+            "name": "NODE_CONFIG",
+            "value": "{}"
+        }, {
             "name": "CONSUL_URL",
             "value": "http://ChronosConsul-dev.elasticbeanstalk.com:80/v1/kv/configmanifest"
-        }, {
-            "name": "REDIS_HOST",
-            "value": "192.168.99.100"
-        }, {
-            "name": "REDIS_PORT",
-            "value": "6379"
         }],
         "portMappings": [{
             "hostPort": "80",
-            "containerPort": "3000"
+            "containerPort": "8080"
         }]
     }]
 }
