@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "live-center schema",
+  "description": "This is the schema for the live-center API",
+  "type":"array",
+  "items": {
+    "$ref": "#/definitions/entry"
+  },
+  "definitions": {
+    "entry": {
+      "description": "A live event entry",
+      "type": "object",
+      "properties": {
+        "entryId": {
+          "description": "The Id of an entry",
+          "type": "integer",
+          "minimum": 0
+        },
+        "entryStyle": {
+          "description": "The style of the entry",
+          "type": "string"
+        },
+        "entryTitle": {
+          "description": "The title of the entry.",
+          "type": "string"
+        },
+        "postTime": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "hideTimestamp": {
+          "description": "Whether to hide the entry's timestamp",
+          "type": "boolean"
+        },
+        "isSticky": {
+          "description": "Whether the entry is a sticky entry",
+          "type": "boolean"
+        },
+        "entryAuthor": {
+          "description": "The name of the author of this entry.",
+          "type": "string"
+        },
+        "entryContent": {
+          "type":"array",
+          "items": {
+            "oneOf": [
+              {"$ref": "#/definitions/textContent"},
+              {"$ref": "#/definitions/embeddedContent"},
+              {"$ref": "#/definitions/imageContent"},
+              {"$ref": "#/definitions/tweetContent"},
+              {"$ref": "#/definitions/possessionRatioContent"}
+            ]
+          }
+        }
+      },
+      "required": [
+        "entryId",
+        "style",
+        "postTime",
+        "hideTimestamp",
+        "isSticky",
+        "entryContent"
+      ]
+    },
+    "textContent": {
+      "type": "object",
+      "description": "A text-only content item",
+      "properties": {
+        "paragraphType": {
+          "type": "string",
+          "description": "The type of this paragraph's content.",
+          "enum": ["text"]
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of this paragraph."
+        }
+      },
+      "required": [
+        "paragraphType",
+        "text"
+      ]
+    },
+    "embeddedContent": {
+      "type": "object",
+      "description": "An embedded content item",
+      "properties": {
+        "paragraphType": {
+          "type": "string",
+          "description": "The type of this paragraph's content.",
+          "enum": ["embedded"]
+        },
+        "url": {
+          "type": "string",
+          "description": "The presentation url of this escenic content item."
+        }
+      },
+      "required": [
+        "paragraphType",
+        "url"
+      ]
+    },
+    "imageContent": {
+      "type": "object",
+      "description": "An image",
+      "properties": {
+        "paragraphType": {
+          "type": "string",
+          "description": "The type of this paragraph's content.",
+          "enum": ["image"]
+        },
+        "src": {
+          "type": "string",
+          "description": "The src of this image."
+        },
+        "caption": {
+          "type": "string",
+          "description": "The caption of this image."
+        },
+        "altText": {
+          "type": "string",
+          "description": "The altText of this image."
+        },
+        "imageCredit": {
+          "type": "string",
+          "description": "The image credit."
+        }
+      },
+      "required": [
+        "paragraphType",
+        "src"
+      ]
+    },
+    "tweetContent": {
+      "type": "object",
+      "description": "A tweet",
+      "properties": {
+        "paragraphType": {
+          "type": "string",
+          "description": "The type of this paragraph's content.",
+          "enum": ["tweet"]
+        },
+        "tweetURL": {
+          "type": "string",
+          "description": "The URL of the tweet."
+        }
+      },
+      "required": [
+        "paragraphType",
+        "tweetURL"
+      ]
+    },
+    "possessionRatioContent": {
+      "type": "object",
+      "description": "A Overall Possession Ratio statistic from opta",
+      "properties": {
+        "paragraphType": {
+          "type": "string",
+          "description": "The type of this paragraph's content.",
+          "enum": ["possessionRatioStatistic"]
+        },
+        "homeTeam": {
+          "type": "string"
+        },
+        "awayTeam": {
+          "type": "string"
+        },
+        "homeTeamPossession": {
+          "type": "string",
+          "pattern": "^[0-9]*(.[0-9]+)?$"
+        },
+        "awayTeamPossession": {
+          "type": "string",
+          "pattern": "^[0-9]*(.[0-9]+)?$"
+        }
+      },
+      "required": [
+        "paragraphType",
+        "homeTeam",
+        "awayTeam",
+        "homeTeamPossession",
+        "awayTeamPossession"
+      ]
+    },
+    "timestamp": {
+      "description": "A unix timestamp, in milliseconds",
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
