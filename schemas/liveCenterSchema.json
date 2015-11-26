@@ -35,6 +35,10 @@
           "description": "Whether the entry is a sticky entry",
           "type": "boolean"
         },
+        "isKeyEvent": {
+          "description": "Whether the entry is a key event",
+          "type": "boolean"
+        },
         "entryAuthor": {
           "description": "The name of the author of this entry.",
           "type": "string"
@@ -58,6 +62,7 @@
         "postTime",
         "hideTimestamp",
         "isSticky",
+        "isKeyEvent",
         "entryContent"
       ]
     },
