@@ -17,12 +17,7 @@
           "minimum": 0
         },
         "type": {
-          "description": "The entry type",
-          "type": "string",
-          "enum": ["liveEntry"]
-        },
-        "style": {
-          "description": "The style of the entry",
+          "description": "The entry's style",
           "type": "string"
         },
         "title": {
@@ -48,6 +43,11 @@
           "description": "The name of the author of this entry.",
           "type": "string"
         },
+        "matchTime": {
+          "type": "string",
+          "description": "The time of this post, as measured in the match.",
+          "pattern": "^[0-9]+(\\+[0-9]+)?$"
+        },
         "content": {
           "type":"array",
           "items": {
@@ -67,7 +67,7 @@
       },
       "required": [
         "id",
-        "style",
+        "type",
         "postTime",
         "hideTimestamp",
         "isSticky",
