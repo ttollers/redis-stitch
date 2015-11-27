@@ -1,0 +1,9 @@
+presentation:
+  environment:
+    CONSUL_URL: http://ChronosConsul-moo.elasticbeanstalk.com:80/v1/kv/configmanifest
+    ENV_SUFFIX: dev
+    NODE_CONFIG: '{"redis":{"host":"chronos-presentation.9u29sh.0001.euw1.cache.amazonaws.com","port":"6379"}}'
+    NODE_ENV: production
+  image: trinitymirror/presentation-service
+  ports:
+  - 80:8080

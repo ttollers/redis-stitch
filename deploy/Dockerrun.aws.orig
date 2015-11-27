@@ -10,9 +10,6 @@
         "essential": "true",
         "memory": 256,
         "environment": [{
-            "name": "NODE_ENV",
-            "value": "production"
-        }, {
             "name": "ENV_SUFFIX",
             "value": "dev"
         }, {
