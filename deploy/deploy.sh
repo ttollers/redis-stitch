@@ -10,4 +10,4 @@ sed "s/{}/$NODE_CONFIG/g" > Dockerrun.aws.json
 cat Dockerrun.aws.json
 
 eb init
-eb deploy chronos-pres-$ENVIRONMENT_SUFFIX
+eb deploy ChronosPres-$ENVIRONMENT_SUFFIX
