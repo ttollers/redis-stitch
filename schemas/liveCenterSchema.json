@@ -11,16 +11,21 @@
       "description": "A live event entry",
       "type": "object",
       "properties": {
-        "entryId": {
+        "id": {
           "description": "The Id of an entry",
           "type": "integer",
           "minimum": 0
         },
-        "entryStyle": {
+        "type": {
+          "description": "The entry type",
+          "type": "string",
+          "enum": ["liveEntry"]
+        },
+        "style": {
           "description": "The style of the entry",
           "type": "string"
         },
-        "entryTitle": {
+        "title": {
           "description": "The title of the entry.",
           "type": "string"
         },
@@ -39,11 +44,11 @@
           "description": "Whether the entry is a key event",
           "type": "boolean"
         },
-        "entryAuthor": {
+        "author": {
           "description": "The name of the author of this entry.",
           "type": "string"
         },
-        "entryContent": {
+        "content": {
           "type":"array",
           "items": {
             "type":"object",
@@ -55,26 +60,26 @@
               {"$ref": "#/definitions/possessionRatioContent"}
             ],
             "required": [
-              "paragraphType"
+              "type"
             ]
           }
         }
       },
       "required": [
-        "entryId",
+        "id",
         "style",
         "postTime",
         "hideTimestamp",
         "isSticky",
         "isKeyEvent",
-        "entryContent"
+        "content"
       ]
     },
     "textContent": {
       "type": "object",
       "description": "A text-only content item",
       "properties": {
-        "paragraphType": {
+        "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
           "enum": ["text"]
@@ -92,7 +97,7 @@
       "type": "object",
       "description": "An embedded content item",
       "properties": {
-        "paragraphType": {
+        "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
           "enum": ["embedded"]
@@ -110,7 +115,7 @@
       "type": "object",
       "description": "An image",
       "properties": {
-        "paragraphType": {
+        "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
           "enum": ["image"]
@@ -140,7 +145,7 @@
       "type": "object",
       "description": "A tweet",
       "properties": {
-        "paragraphType": {
+        "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
           "enum": ["tweet"]
@@ -158,7 +163,7 @@
       "type": "object",
       "description": "A Overall Possession Ratio statistic from opta",
       "properties": {
-        "paragraphType": {
+        "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
           "enum": ["possessionRatioStatistic"]
