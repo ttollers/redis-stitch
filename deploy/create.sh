@@ -10,4 +10,4 @@ sed "s/{}/$NODE_CONFIG/g" > Dockerrun.aws.json
 cat Dockerrun.aws.json
 
 eb init
-eb create presentation-service-$ENVIRONMENT_SUFFIX --cname "presentation-service-$ENVIRONMENT_SUFFIX" --single -k generator
+eb create chronos-pres-$ENVIRONMENT_SUFFIX --cname "chronos-pres-$ENVIRONMENT_SUFFIX" --single -k generator
