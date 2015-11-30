@@ -54,9 +54,9 @@
             "type":"object",
             "oneOf": [
               {"$ref": "#/definitions/textContent"},
-              {"$ref": "#/definitions/embeddedContent"},
+              {"$ref": "#/definitions/escenicContent"},
               {"$ref": "#/definitions/imageContent"},
-              {"$ref": "#/definitions/tweetContent"},
+              {"$ref": "#/definitions/externalContent"},
               {"$ref": "#/definitions/possessionRatioContent"}
             ],
             "required": [
@@ -86,21 +86,21 @@
         },
         "text": {
           "type": "string",
-          "description": "The content of this paragraph."
+          "description": "The content of this paragraph. This may also contain HTML."
         }
       },
       "required": [
         "text"
       ]
     },
-    "embeddedContent": {
+    "escenicContent": {
       "type": "object",
-      "description": "An embedded content item",
+      "description": "An embedded Escenic content item",
       "properties": {
         "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
-          "enum": ["embedded"]
+          "enum": ["escenic"]
         },
         "url": {
           "type": "string",
@@ -141,22 +141,22 @@
         "src"
       ]
     },
-    "tweetContent": {
+    "externalContent": {
       "type": "object",
-      "description": "A tweet",
+      "description": "An external piece of content, such as a tweet or instagram post.",
       "properties": {
         "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
-          "enum": ["tweet"]
+          "enum": ["tweet", "instagram"]
         },
-        "tweetURL": {
+        "url": {
           "type": "string",
-          "description": "The URL of the tweet."
+          "description": "The URL of the external content."
         }
       },
       "required": [
-        "tweetURL"
+        "url"
       ]
     },
     "possessionRatioContent": {
