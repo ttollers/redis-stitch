@@ -291,5 +291,128 @@ describe('unit tests', () => {
                     .end(done);
             });
         });
+    });
+
+    describe('sdk', () => {
+        var presentationService = require('../sdk');
+        it('exists', () => assert.ok(ps));
+
+        var ps = presentationService();
+        var save = {};
+
+        it('has a put method', (done)=>{
+            assert(R.has('put', ps));
+            ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data" }')
+                .map(() => {
+                    assert.ok(ps.db['/v1/nationals-live/6679834/130']);
+                    save["put /v1/nationals-live/6679834/130"] = R.clone(ps.db);
+                })
+                .pull(done)
+        });
+
+        it('put is idempotent', (done)=>{
+            assert(R.has('put', ps));
+            ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data" }')
+                .map(() => {
+                    assert.deepEqual(ps.db, save["put /v1/nationals-live/6679834/130"])
+                })
+                .pull(done)
+        });
+
+
+        it('has a get method', (done)=>{
+            assert(R.has('get', ps));
+            ps.get('/v1/nationals-live/6679834/130')
+                .map(_ => {
+                    assert.ok(_);
+                    assert.equal(_.data, 'this is just some data')
+                })
+                .pull(done)
+        });
+
+        it('get throws on 404', (done)=>{
+            assert(R.has('get', ps));
+            ps.get('/v1/nationals-live/6679834/131')
+                .pull(err => {
+                    assert(R.is(Error, err), 'throws an err');
+                    assert.equal(err.message, '/v1/nationals-live/6679834/131 not available');
+                    done()
+                })
+        });
+
+        it('has a del method', (done)=>{
+            assert(R.has('del', ps));
+            ps.del('/v1/nationals-live/6679834/130')
+                .map(() => {
+                    assert.notOk(ps.db['/v1/nationals-live/6679834/130'])
+                })
+                .pull(done)
+        });
+
+        it('has a add method', (done)=>{
+            assert(R.has('add', ps));
+            ps.add('/v1/nationals-live/6679834', 0, '${/v1/nationals-live/6679834/130}')
+                .map(() => {
+                    assert(ps.db['/v1/nationals-live/6679834']['${/v1/nationals-live/6679834/130}'] === 0);
+                    save["add to /v1/nationals-live/6679834"] = R.clone(ps.db);
+                })
+                .pull(done)
+        });
+
+        it('add is idempotent', (done)=>{
+            assert(R.has('add', ps));
+            ps.add('/v1/nationals-live/6679834', 0, '${/v1/nationals-live/6679834/130}')
+                .map(() => {
+                    assert.deepEqual(ps.db, save["add to /v1/nationals-live/6679834"]);
+                })
+                .pull(done)
+        });
+
+        it('has a rem method', (done)=>{
+            assert(R.has('del', ps));
+            ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
+                .map(() => {
+                    assert.notOk(ps.db['/v1/nationals-live/6679834']['${/v1/nationals-live/6679834/130}']);
+                    save["rem on /v1/nationals-live/6679834"] = R.clone(ps.db);
+                })
+                .pull(done)
+        });
+
+        it('rem is idempotent', (done)=>{
+            assert(R.has('del', ps));
+            ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
+                .map(() => {
+                    assert.deepEqual(ps.db, save["rem on /v1/nationals-live/6679834"])
+                })
+                .pull(done)
+        });
+
+        it('get works on lists', (done)=>{
+            assert(R.has('add', ps));
+            hl.merge([
+                ps.add('/v1/nationals-live/6679834', 3, '${/v1/nationals-live/6679834/133}'),
+                ps.add('/v1/nationals-live/6679834', 1, '${/v1/nationals-live/6679834/131}'),
+                ps.add('/v1/nationals-live/6679834', 2, '${/v1/nationals-live/6679834/132}'),
+                ps.add('/v1/nationals-live/6679834', 0, '${/v1/nationals-live/6679834/130}'),
+                ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data0" }'),
+                ps.put('/v1/nationals-live/6679834/131', '{ "data": "this is just some data1" }'),
+                ps.put('/v1/nationals-live/6679834/132', '{ "data": "this is just some data2" }'),
+                ps.put('/v1/nationals-live/6679834/133', '{ "data": "this is just some data3" }')
+            ])
+                .collect()
+                .flatMap(() => {
+                    return ps.get('/v1/nationals-live/6679834')
+                })
+                .map(_ => {
+                    assert.deepEqual(_, [
+                        { "data": "this is just some data0" },
+                        { "data": "this is just some data1" },
+                        { "data": "this is just some data2" },
+                        { "data": "this is just some data3" }
+                    ]);
+                })
+                .pull(done)
+        });
+
     })
 });
