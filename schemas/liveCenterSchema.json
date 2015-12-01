@@ -54,7 +54,6 @@
             "type":"object",
             "oneOf": [
               {"$ref": "#/definitions/textContent"},
-              {"$ref": "#/definitions/escenicContent"},
               {"$ref": "#/definitions/imageContent"},
               {"$ref": "#/definitions/externalContent"},
               {"$ref": "#/definitions/possessionRatioContent"}
@@ -93,24 +92,6 @@
         "text"
       ]
     },
-    "escenicContent": {
-      "type": "object",
-      "description": "An embedded Escenic content item",
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "The type of this paragraph's content.",
-          "enum": ["escenic"]
-        },
-        "url": {
-          "type": "string",
-          "description": "The presentation url of this escenic content item."
-        }
-      },
-      "required": [
-        "url"
-      ]
-    },
     "imageContent": {
       "type": "object",
       "description": "An image",
@@ -143,12 +124,12 @@
     },
     "externalContent": {
       "type": "object",
-      "description": "An external piece of content, such as a tweet or instagram post.",
+      "description": "An external piece of content, such as an escenic embedded content item, tweet or instagram post.",
       "properties": {
         "type": {
           "type": "string",
           "description": "The type of this paragraph's content.",
-          "enum": ["tweet", "instagram"]
+          "enum": ["escenic", "tweet", "instagram"]
         },
         "url": {
           "type": "string",
