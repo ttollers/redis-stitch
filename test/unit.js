@@ -194,7 +194,7 @@ describe('unit tests', () => {
                     assert.notOk(data);
                     assert.ok(err, 'there is an error');
                     assert.ok(err.body, 'it is a HttpError');
-                    assert.equal(err.statusCode, 500, 'it is a 500');
+                    assert.notEqual(err.statusCode, 200, 'it is an error');
                     done()
                 })
         })
