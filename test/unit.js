@@ -140,6 +140,16 @@ describe('unit tests', () => {
                 .pull(done)
         });
 
+        it('should not blow the stack on long lists', (done) => {
+            db = {
+                key: '['+ R.repeat('${value}', 150).join(',') +']',
+                value: 'something'
+            };
+            hydrateKey({}, 'key', [])
+                .map(value => assert.equal(value, '[' + R.repeat('something', 150).join(',')+ ']'))
+                .pull(done)
+        });
+
         it('should hydrate part containing ${ref,prop,subprop}', (done) => {
             db = {
                 key: 'step 1: ${steps,one}, step 2: ${steps,two,three}, step 3: Profit',
