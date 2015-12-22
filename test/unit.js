@@ -7,90 +7,36 @@ var hl = require('highland');
 var request = require('supertest');
 var restify = require('restify');
 
-var db = {};
-v1.__set__('db',{
-    getKey(key){
-        if (db[key] === void 0) return hl([null]);
-        else if (R.is(String, db[key])) return hl([db[key]]);
-        else {
-            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
-            e.code = 'WRONGTYPE';
-            return hl(push =>  push(e))
-        }
-    },
-    listKey(key){
-        if (R.is(Array, db[key])) return hl([R.pluck(1, db[key])]);
-        else {
-            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
-            e.code = 'WRONGTYPE';
-            return hl(push =>  push(e))
-        }
-    },
-    setKey(key, value){
-        db[key] = value;
-        return hl(["OK"]);
-    },
-    delKey(key){
-        var output = R.has(key, db) ? 1 : 0;
-        delete db[key];
-        return hl([output]);
-    },
-    addToKey(key, score, value){
-        try {
-            db[key] = db[key] || [];
-            db[key].push([score, value]);
-            db[key] = R.sortBy(R.prop(0), db[key]);
-            return hl(["OK"]);
-        } catch (e) {
-            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
-            e.code = 'WRONGTYPE';
-            return hl(push =>  push(e))
-        }
-    },
-    delFromKey(key, value){
-        if (db[key] == void 0) return 0;
-        else if (R.is(Array, db[key])) {
-            var l = db[key].length;
-            db[key] = R.reject(xs => xs[1] === value, db[key]);
-            return hl([l - db[key].length]);
-        } else {
-            e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
-            e.code = 'WRONGTYPE';
-            return hl(push =>  push(e))
-        }
-    }
-});
-
+var db = v1.__get__('db');
+// TODO: these tests should be modified to not use db.store and should instead use the api to get/set vaules
 describe('unit tests', () => {
-    beforeEach(() => db = {});
+    beforeEach(() =>  db.store = {});
     describe('hydrateKey', () => {
         var hydrateKey = v1.__get__('hydrateKey');
 
         it('should pluck values which are plain string', (done) => {
-            db = { key: 'value' };
+            db.store = { key: 'value' };
             hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, 'value'))
                 .pull(done)
         });
 
         it('should pluck values which are list values ', (done) => {
-            db = { key: [
-                [0, 'value1'],
-                [1, 'value2']] };
+            db.store = { key: { value1:0,'value2':1 } };
             hydrateKey({}, 'key', [])
                 .map(value => assert.equal(value, '[value1,value2]'))
                 .pull(done)
         });
 
         it('should pull from local if it can', (done) => {
-            db = { key: 'value' };
+            db.store = { key: 'value' };
             hydrateKey({ key: 'local' }, 'key', [])
                 .map(value => assert.equal(value, 'local'))
                 .pull(done)
         });
 
         it('should error when there is no data', (done) => {
-            db = {};
+            db.store = {};
             hydrateKey({}, 'key', [])
                 .pull((err, data) => {
                     assert.notOk(data);
@@ -102,7 +48,7 @@ describe('unit tests', () => {
         });
 
         it('should hydrate values which contain ${ref}', (done) => {
-            db = {
+            db.store = {
                 key: 'hello ${area}',
                 area: 'world'
             };
@@ -112,7 +58,7 @@ describe('unit tests', () => {
         });
 
         it('should return the default value from ${ref|def} if ref doesn\'t exist', (done) => {
-            db = {
+            db.store = {
                 key: 'hello ${area;nothing}'
             };
             hydrateKey({}, 'key', [])
@@ -121,7 +67,7 @@ describe('unit tests', () => {
         });
 
         it('should return the default value from ${ref|def} if ref doesn\'t exist even if this is the string "null"', (done) => {
-            db = {
+            db.store = {
                 key: 'hello ${area;null}'
             };
             hydrateKey({}, 'key', [])
@@ -130,7 +76,7 @@ describe('unit tests', () => {
         });
 
         it('should deep hydrate values which contain ${ref}', (done) => {
-            db = {
+            db.store = {
                 key: 'welcome to ${area}',
                 area: 'my ${place}',
                 place: 'world'
@@ -141,7 +87,7 @@ describe('unit tests', () => {
         });
 
         it('should not blow the stack on long lists', (done) => {
-            db = {
+            db.store = {
                 key: '['+ R.repeat('${value}', 150).join(',') +']',
                 value: 'something'
             };
@@ -151,7 +97,7 @@ describe('unit tests', () => {
         });
 
         it('should hydrate part containing ${ref,prop,subprop}', (done) => {
-            db = {
+            db.store = {
                 key: 'step 1: ${steps,one}, step 2: ${steps,two,three}, step 3: Profit',
                 steps: '{"one": "write a fan-fiction", "two": { "three": "make movie of it"} }'
             };
@@ -161,7 +107,7 @@ describe('unit tests', () => {
         });
 
         it('should error if a prop doesn\'t exist', (done) => {
-            db = {
+            db.store = {
                 key: 'welcome to ${area,one}',
                 area: '{}'
             };
@@ -176,7 +122,7 @@ describe('unit tests', () => {
         });
 
         it('should hydrate multiple values which contain ${ref}', (done) => {
-            db = {
+            db.store = {
                 key: 'hello ${area}, it is such a ${compliment} ${timePeriod}',
                 area: 'world',
                 compliment: 'great',
@@ -187,8 +133,19 @@ describe('unit tests', () => {
                 .pull(done)
         });
 
+
+        it('CRON-280 should no longer happen', (done) => {
+            db.store = {
+                "key": "${foo;null}",
+                "foo": '{"man": "${bar,a;}", "choo": "${bar,b;}" }',
+            };
+            hydrateKey({}, 'key', [])
+                .map(value => assert.deepEqual(JSON.parse(value), { man: '', choo: '' }))
+                .pull(done)
+        });
+
         it('should error when there is cycle', (done) => {
-            db = { key: '${key}' };
+            db.store = { key: '${key}' };
             hydrateKey({}, 'key', [])
                 .pull((err, data) => {
                     assert.notOk(data);
@@ -218,7 +175,7 @@ describe('unit tests', () => {
             });
 
             it('should get string data saved in redis', (done) => {
-                db = { '/v1/hello/world': 'my value' };
+                db.store = { '/v1/hello/world': 'my value' };
                 request(app)
                     .get('/v1/hello/world')
                     .expect(200, 'my value')
@@ -226,15 +183,16 @@ describe('unit tests', () => {
             });
 
             it('should get list data saved in redis', (done) => {
-                db = {
+                db.store = {
                     '/v1/hello/world': 'my value',
                     '/v1/hello/world2': 'my value2',
                     '/v1/hello/world3': 'my value3',
-                    '/v1/list': [
-                        [0,'${/v1/hello/world}'],
-                        [1,'${/v1/hello/world2}'],
-                        [2,'${/v1/hello/world3}']
-                    ]
+                    '/v1/list': {
+                        '${/v1/hello/world}': 0,
+                        '${/v1/hello/world2}': 2,
+                        '${/v1/hello/world3}': 3
+                    }
+
                 };
                 request(app)
                     .get('/v1/list')
@@ -249,7 +207,7 @@ describe('unit tests', () => {
                     .put('/v1/hello/world')
                     .send('my value')
                     .expect(204)
-                    .expect(() => assert.equal(db['/v1/hello/world'], 'my value'))
+                    .expect(() => assert.equal(db.store['/v1/hello/world'], 'my value'))
                     .end(done);
             });
 
@@ -259,14 +217,14 @@ describe('unit tests', () => {
                     .query({ score: 0 })
                     .send('my value')
                     .expect(204)
-                    .expect(() => assert.deepEqual(db['/v1/hello/world'], [[0,'my value']]))
+                    .expect(() => assert.deepEqual(db.store['/v1/hello/world'], {'my value': 0}))
                     .end(done);
             });
         });
 
         describe('del', () => {
             it('should delete values from the db', (done) => {
-                db = { '/v1/hello/world': 'my value' };
+                db.store = { '/v1/hello/world': 'my value' };
                 request(app)
                     .del('/v1/hello/world')
                     .expect(204)
@@ -275,28 +233,28 @@ describe('unit tests', () => {
             });
 
             it('should delete values from a list in the db', (done) => {
-                db = {
+                db.store = {
                     '/v1/hello/world': 'my value',
                     '/v1/hello/world2': 'my value2',
                     '/v1/hello/world3': 'my value3',
-                    '/v1/list': [
-                        [0,'${/v1/hello/world}'],
-                        [1,'${/v1/hello/world2}'],
-                        [2,'${/v1/hello/world3}']
-                    ]
+                    '/v1/list': {
+                        '${/v1/hello/world}': 0,
+                        '${/v1/hello/world2}': 2,
+                        '${/v1/hello/world3}': 3
+                    }
                 };
                 request(app)
                     .del('/v1/list')
                     .expect(204)
                     .query({ value: '${/v1/hello/world2}' })
-                    .expect(() => assert.deepEqual(db, {
+                    .expect(() => assert.deepEqual(db.store, {
                         '/v1/hello/world': 'my value',
                         '/v1/hello/world2': 'my value2',
                         '/v1/hello/world3': 'my value3',
-                        '/v1/list': [
-                            [0,'${/v1/hello/world}'],
-                            [2,'${/v1/hello/world3}']
-                        ]
+                        '/v1/list': {
+                            '${/v1/hello/world}': 0,
+                            '${/v1/hello/world3}': 3
+                        }
                     }))
                     .end(done);
             });
@@ -305,10 +263,10 @@ describe('unit tests', () => {
 
     describe('sdk', () => {
         var presentationService = require('../sdk');
-        it('exists', () => assert.ok(ps));
-
         var ps = presentationService();
         var save = {};
+
+        it('exists', () => assert.ok(ps));
 
         it('has a put method', (done)=>{
             assert(R.has('put', ps));
@@ -322,6 +280,7 @@ describe('unit tests', () => {
 
         it('put is idempotent', (done)=>{
             assert(R.has('put', ps));
+            ps.db = save["put /v1/nationals-live/6679834/130"];
             ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data" }')
                 .map(() => {
                     assert.deepEqual(ps.db, save["put /v1/nationals-live/6679834/130"])
@@ -332,6 +291,7 @@ describe('unit tests', () => {
 
         it('has a get method', (done)=>{
             assert(R.has('get', ps));
+            ps.db = save["put /v1/nationals-live/6679834/130"];
             ps.get('/v1/nationals-live/6679834/130')
                 .map(_ => {
                     assert.ok(_);
@@ -352,6 +312,7 @@ describe('unit tests', () => {
 
         it('has a del method', (done)=>{
             assert(R.has('del', ps));
+            ps.db = save["put /v1/nationals-live/6679834/130"];
             ps.del('/v1/nationals-live/6679834/130')
                 .map(() => {
                     assert.notOk(ps.db['/v1/nationals-live/6679834/130'])
@@ -371,6 +332,7 @@ describe('unit tests', () => {
 
         it('add is idempotent', (done)=>{
             assert(R.has('add', ps));
+            ps.db = save["add to /v1/nationals-live/6679834"];
             ps.add('/v1/nationals-live/6679834', 0, '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.deepEqual(ps.db, save["add to /v1/nationals-live/6679834"]);
@@ -379,7 +341,8 @@ describe('unit tests', () => {
         });
 
         it('has a rem method', (done)=>{
-            assert(R.has('del', ps));
+            assert(R.has('rem', ps));
+            ps.db = save["add to /v1/nationals-live/6679834"];
             ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.notOk(ps.db['/v1/nationals-live/6679834']['${/v1/nationals-live/6679834/130}']);
@@ -389,7 +352,8 @@ describe('unit tests', () => {
         });
 
         it('rem is idempotent', (done)=>{
-            assert(R.has('del', ps));
+            assert(R.has('rem', ps));
+            ps.db = save["rem on /v1/nationals-live/6679834"];
             ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.deepEqual(ps.db, save["rem on /v1/nationals-live/6679834"])
@@ -398,6 +362,7 @@ describe('unit tests', () => {
         });
 
         it('get works on lists', (done)=>{
+            ps.db = save["add to /v1/nationals-live/6679834"];
             assert(R.has('add', ps));
             hl.merge([
                 ps.add('/v1/nationals-live/6679834', 3, '${/v1/nationals-live/6679834/133}'),
