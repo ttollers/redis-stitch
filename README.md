@@ -18,12 +18,12 @@ var ps = require('presentation-service')('<web-server-url>');
 ```
 where `<web-server-url>` is the url of a hosted presentation-service, this will expose a number of functions
 
- - `put: (key, value, cb) => void` - TODO 
- - `del: (key, cb) => void` - TODO
- - `add: (key, score, value, cb) => void` - TODO 
- - `del: (key, cb) => void` - TODO 
- - `rem: (key, value, cb) => void` - TODO 
- - `get: (key, cb) => void` - TODO 
+ - `put: (key, value, cb) => void` - Sets value at key
+ - `del: (key, cb) => void` - deletes the value at key
+ - `add: (key, score, value, cb) => void` - adds value to the list at key
+ - `del: (key, cb) => void` - deletes the value at key
+ - `rem: (key, value, cb) => void` - removes the value from the list at key
+ - `get: (key, cb) => void` - gets the value at key, hydating any placeholders. If the value is a list it will return it in the form `[<val1>,<val1>,..]` where `<val1>` etc are the hydrated values in the list.
 
 **keys**
 
