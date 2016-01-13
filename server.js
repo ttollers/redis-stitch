@@ -4,8 +4,7 @@
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
-var winston = require('winston');
-var logger = winston;
+var logger = require('winston');
 
 logger.info('Config : %j', config, {});
 
