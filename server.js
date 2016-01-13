@@ -4,7 +4,10 @@
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
-console.log('config', config);
+var winston = require('winston');
+var logger = winston;
+
+logger.info('Config : %j', config, {});
 
 function useAPI(prefix, server) {
     var api = require('./lib/' + prefix);
@@ -29,7 +32,7 @@ server.use(restify.queryParser());
 useAPI('v1', server);
 
 server.on('uncaughtException', function(req, res, route, err) {
-    console.error(err.stack);
+    logger.error(err.stack);
     res.send(new restify.InternalServerError());
     res.end();
 });
@@ -37,5 +40,5 @@ server.on('uncaughtException', function(req, res, route, err) {
 
 db.connect();
 server.listen(config.server.port, function() {
-    console.log('%s listening at %s', server.name, server.url);
+    logger.info('%s listening at %s', server.name, server.url, {});
 });
