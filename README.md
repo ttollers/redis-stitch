@@ -35,6 +35,9 @@ Here square brackets denote optional parameters and angle brackets denote parame
 A resource of this form will output the value of the `<key>[,<prop_1>,<prop_2>..]` if it is successfully retrieved otherwise it returns `<default>` if it is given or an error message. Furthermore if the value at `<key>` is JSON then what is returned is the value found when you pick the `prop_1` field from that json and the `prop_2` from that and so on.
 for example given that `{ foo: { bar: "hoot" } }` is saved at '/v1/key', then `/v1/key,foo,bar` will return `"hoot"` and `/v1/key,foo,car;woot` will return `"woot"`
 
+To query a range of items from a list, append the url with `[<min>|<max>]^<limit>`. For example `/v1/nationals-live/6679834[1|2]^1`
+All parameters are optional.
+
 
 #Contributors
 [Dayo Adeyemi](https://www.npmjs.com/~dayoadeyemi) 
