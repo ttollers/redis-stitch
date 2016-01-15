@@ -376,6 +376,7 @@ describe('unit tests', () => {
             ])
                 .collect()
                 .flatMap(() => {
+                    save['/v1/nationals-live/6679834 has 4 items'] = R.clone(ps.db)
                     return ps.get('/v1/nationals-live/6679834')
                 })
                 .map(_ => {
@@ -386,6 +387,60 @@ describe('unit tests', () => {
                         { "data": "this is just some data3" }
                     ]);
                 })
+                .pull(done)
+        });
+
+        it('filters lists', (done)=>{
+            ps.db = save["/v1/nationals-live/6679834 has 4 items"];
+            assert(R.has('add', ps));
+            hl.merge([
+                    ps.get('/v1/nationals-live/6679834[1|2]')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data1" },
+                                { "data": "this is just some data2" }
+                            ]);
+                        }),
+                    ps.get('/v1/nationals-live/6679834[-1|2]')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data0" },
+                                { "data": "this is just some data1" },
+                                { "data": "this is just some data2" }
+                            ]);
+                        }),
+                    ps.get('/v1/nationals-live/6679834[|2]')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data0" },
+                                { "data": "this is just some data1" },
+                                { "data": "this is just some data2" }
+                            ]);
+                        }),
+                    ps.get('/v1/nationals-live/6679834[1|]')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data1" },
+                                { "data": "this is just some data2" },
+                                { "data": "this is just some data3" }
+                            ]);
+                        }),
+                    ps.get('/v1/nationals-live/6679834^2')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data0" },
+                                { "data": "this is just some data1" }
+                            ]);
+                        }),
+                    ps.get('/v1/nationals-live/6679834[1|]^2')
+                        .map(_ => {
+                            assert.deepEqual(_, [
+                                { "data": "this is just some data1" },
+                                { "data": "this is just some data2" }
+                            ]);
+                        })
+            ])
+                .collect()
                 .pull(done)
         });
 
