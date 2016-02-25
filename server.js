@@ -11,7 +11,7 @@ logger.info('Config : %j', config, {});
 function useAPI(prefix, server) {
     var api = require('./lib/' + prefix);
     for (var method in api) {
-        if (api.hasOwnProperty(method)) {
+        if (api.hasOwnProperty(method) && config.allowedMethods.hasOwnProperty(method)) {
             server[method](new RegExp('\/' + prefix + '\/.+'), api[method]);
         }
     }
