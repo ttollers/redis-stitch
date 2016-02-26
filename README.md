@@ -2,17 +2,35 @@
 
 The presentation service is a thin wrapper around redis for doing joins via in place string replacement on request.
 
-### How does it work? ###
+## How does it work? ##
 
 The presentation service is a node web-server that requires a redis instance as a backing database (or that runs off process memory for testing purposes). It also come bundles with a node js based javascript sdk for making requests to a presentation service instance.
 
-### How do I use it? ###
-**The web-server**
- set the redis setting and port setting in the config file, the is an example in config/default.js, this is imported using [node-config](https://www.npmjs.com/package/config).
+## How do I use it? ##
+#### The web-server ####
 
-**The sdk**
+The server is started from `server.js`. There is an example configuration of the web-server in config/default.js, which is imported using [node-config](https://www.npmjs.com/package/config).
 
-After installing with `npm install presentation-service`, use
+**Running the web-server locally**
+
+First, build the presentation service docker image using
+
+```
+docker build .
+```
+
+which will output the `#presentationServiceDockerHash`
+
+In order to actually run the presentation service a redis instance must already be running. To run a local instance of redis in a docker container that will work with the example config, run the following commands to set up a redis container linked to a presentation service instance:
+
+```
+docker run --name redis -d redis
+docker run --name presentation-service --link redis:redis -d #presentationServiceDockerHash
+```
+
+#### The sdk ####
+
+After installing with `npm install -s presentation-service`, use
 ```javascript
 var ps = require('presentation-service')('<web-server-url>');
 ```
