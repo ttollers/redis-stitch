@@ -1,6 +1,6 @@
 {
   "name": "presentation-service",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "",
   "main": "sdk.js",
   "directories": {
@@ -15,6 +15,7 @@
   "dependencies": {
     "config": "^1.17.1",
     "highland": "^2.5.1",
+    "morgan": "^1.7.0",
     "ramda": "^0.18.0",
     "redis": "^2.3.0",
     "restify": "^4.0.3",

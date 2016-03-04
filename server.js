@@ -3,6 +3,7 @@ var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
 var logger = require('winston');
+var morgan = require('morgan');
 
 logger.info('Config : %j', config, {});
 
@@ -21,6 +22,8 @@ function useAPI(prefix, server) {
 }
 
 var server = restify.createServer();
+
+server.use(morgan('dev'))
 
 server.use(function crossOrigin(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
