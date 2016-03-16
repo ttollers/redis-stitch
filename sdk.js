@@ -80,7 +80,7 @@ var putObject = R.curry((request, psUrl, key, value) => {
 
 var catchRestErr = function (cb) {
     return function (err, res) {
-        var output, e;
+        var output;
         if (err) return cb(err);
         else if (res.statusCode === 200) {
             try {
