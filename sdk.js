@@ -5,9 +5,9 @@ var hl = require('highland');
 var stringify = require("./lib/stringify");
 
 
-module.exports = function (presentationServiceUrl) {
+module.exports = function(presentationServiceUrl) {
     var request;
-    var getAndSetDb;
+    var getAndSetDb = {};
 
     if (R.isNil(presentationServiceUrl)) { // Test code
         var url = "";
@@ -46,7 +46,7 @@ module.exports = function (presentationServiceUrl) {
         get: get(request, url)
     };
 
-    return Object.defineProperty(returnObj, "db", getAndSetDb || {});
+    return Object.defineProperty(returnObj, "db", getAndSetDb);
 };
 
 var put = (request, presentationServiceUrl) => hl.wrapCallback(function (key, value, cb) {
