@@ -4,7 +4,6 @@ var R = require('ramda');
 var hl = require('highland');
 var stringify = require("./lib/stringify");
 
-
 module.exports = function (presentationServiceUrl) {
     var request;
     var getAndSetDb = {};
@@ -63,7 +62,6 @@ module.exports = function (presentationServiceUrl) {
                 .end(catchRestErr(cb))
         })
     };
-
     return Object.defineProperty(returnObj, "db", getAndSetDb);
 };
 
