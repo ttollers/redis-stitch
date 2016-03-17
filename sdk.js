@@ -65,18 +65,18 @@ module.exports = function (presentationServiceUrl) {
     return Object.defineProperty(returnObj, "db", getAndSetDb);
 };
 
-var put = (request, psUrl) => hl.wrapCallback((key, value, cb) => {
+const put = (request, psUrl) => hl.wrapCallback((key, value, cb) => {
     request
         .put(psUrl + key)
         .send(value)
         .end(catchRestErr(cb))
 });
 
-var putObject = R.curry((request, psUrl, key, value) => {
+const putObject = R.curry((request, psUrl, key, value) => {
     return put(request, psUrl)(key, stringify(value));
 });
 
-var catchRestErr = function (cb) {
+const catchRestErr = function (cb) {
     return function (err, res) {
         var output;
         if (err) return cb(err);
