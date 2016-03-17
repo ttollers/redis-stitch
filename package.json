@@ -7,7 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --recursive",
+    "test": "mocha --recursive test/",
+    "lint": "jshint sdk.js",
+    "pretest": "npm run lint",
     "start": "node server.js"
   },
   "author": "Dayo Adeyemi <thedayoadeyemi@gmail.com> (https://github.com/dayoadeyemi)",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "chai": "^3.4.1",
+    "jshint": "^2.9.1",
     "rewire": "^2.4.0"
   }
 }
