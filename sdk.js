@@ -38,45 +38,47 @@ module.exports = function (presentationServiceUrl) {
     var returnObj = {
         put: put(request, presentationServiceUrl),
         putObject: putObject(request, presentationServiceUrl),
-        del: hl.wrapCallback((key, cb) => {
+        del: hl.wrapCallback(function (key, cb) {
             request
                 .del(presentationServiceUrl + key)
-                .end(catchRestErr(cb))
+                .end(catchRestErr(cb));
         }),
-        add: hl.wrapCallback((key, score, value, cb) => {
+        add: hl.wrapCallback(function (key, score, value, cb) {
             request
                 .put(presentationServiceUrl + key)
                 .query({score: score})
                 .send(value)
-                .end(catchRestErr(cb))
+                .end(catchRestErr(cb));
         }),
-        rem: hl.wrapCallback((key, value, cb) => {
+        rem: hl.wrapCallback(function (key, value, cb) {
             request
                 .del(presentationServiceUrl + key)
                 .query({value: value})
-                .end(catchRestErr(cb))
+                .end(catchRestErr(cb));
         }),
-        get: hl.wrapCallback((key, cb) => {
+        get: hl.wrapCallback(function (key, cb) {
             request
                 .get(presentationServiceUrl + key)
-                .end(catchRestErr(cb))
+                .end(catchRestErr(cb));
         })
     };
     return Object.defineProperty(returnObj, "db", getAndSetDb);
 };
 
-const put = (request, psUrl) => hl.wrapCallback((key, value, cb) => {
-    request
-        .put(psUrl + key)
-        .send(value)
-        .end(catchRestErr(cb))
-});
+var put = function (request, psUrl) {
+    return hl.wrapCallback(function (key, value, cb) {
+        request
+            .put(psUrl + key)
+            .send(value)
+            .end(catchRestErr(cb));
+    });
+};
 
-const putObject = R.curry((request, psUrl, key, value) => {
+var putObject = R.curry(function (request, psUrl, key, value) {
     return put(request, psUrl)(key, stringify(value));
 });
 
-const catchRestErr = function (cb) {
+var catchRestErr = function (cb) {
     return function (err, res) {
         var output;
         if (err) return cb(err);
@@ -94,5 +96,5 @@ const catchRestErr = function (cb) {
             e.code = res.body.code;
             return cb(e);
         }
-    }
+    };
 };
