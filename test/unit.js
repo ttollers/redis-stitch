@@ -199,6 +199,7 @@ describe('unit tests', () => {
                     .expect(200, '[my value,my value2,my value3]')
                     .end(done);
             });
+
         });
 
         describe('put', () => {
@@ -247,6 +248,33 @@ describe('unit tests', () => {
                     .del('/v1/list')
                     .expect(204)
                     .query({value: '${/v1/hello/world2}'})
+                    .expect(() => assert.deepEqual(db.store, {
+                        '/v1/hello/world': 'my value',
+                        '/v1/hello/world2': 'my value2',
+                        '/v1/hello/world3': 'my value3',
+                        '/v1/list': {
+                            '${/v1/hello/world}': 0,
+                            '${/v1/hello/world3}': 3
+                        }
+                    }))
+                    .end(done);
+            });
+
+            it('should delete values from a list by score', (done) => {
+                db.store = {
+                    '/v1/hello/world': 'my value',
+                    '/v1/hello/world2': 'my value2',
+                    '/v1/hello/world3': 'my value3',
+                    '/v1/list': {
+                        '${/v1/hello/world}': 0,
+                        '${/v1/hello/world2}': 2,
+                        '${/v1/hello/world3}': 3
+                    }
+                };
+                request(app)
+                    .del('/v1/list')
+                    .expect(204)
+                    .query({value: 2})
                     .expect(() => assert.deepEqual(db.store, {
                         '/v1/hello/world': 'my value',
                         '/v1/hello/world2': 'my value2',
@@ -380,6 +408,7 @@ describe('unit tests', () => {
         it('get works on lists', (done)=> {
             ps.db = save["add to /v1/nationals-live/6679834"];
             assert(R.has('add', ps));
+            
             hl.merge([
                     ps.add('/v1/nationals-live/6679834', 3, '${/v1/nationals-live/6679834/133}'),
                     ps.add('/v1/nationals-live/6679834', 1, '${/v1/nationals-live/6679834/131}'),
@@ -406,8 +435,56 @@ describe('unit tests', () => {
                 .pull(done)
         });
 
+        it('it works on lists of nested-references', (done) => {
+
+            db.store = {};
+            hl.merge([
+                    ps.add('/v1/nationals-live/6679834', 3, '{ "data": "this is just some data3", "image": { "ref": "${/v1/nationals-live/6679834/133}" } }'),
+                    ps.add('/v1/nationals-live/6679834', 1, '{ "data": "this is just some data1", "image": { "ref": "${/v1/nationals-live/6679834/131}" } }'),
+                    ps.add('/v1/nationals-live/6679834', 2, '{ "data": "this is just some data2", "image": { "ref": "${/v1/nationals-live/6679834/132}" } }'),
+                    ps.add('/v1/nationals-live/6679834', 0, '{ "data": "this is just some data0", "image": { "ref": "${/v1/nationals-live/6679834/130}" } }'),
+                    ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data0" }'),
+                    ps.put('/v1/nationals-live/6679834/131', '{ "data": "this is just some data1" }'),
+                    ps.put('/v1/nationals-live/6679834/132', '{ "data": "this is just some data2" }'),
+                    ps.put('/v1/nationals-live/6679834/133', '{ "data": "this is just some data3" }')
+                ])
+                .collect()
+                .flatMap(() => ps.get('/v1/nationals-live/6679834'))
+                .map(_ => {
+                    assert.deepEqual(_, [
+                        {"data": "this is just some data0"},
+                        {"data": "this is just some data1"},
+                        {"data": "this is just some data2"},
+                        {"data": "this is just some data3"}
+                    ]);
+                })
+                .pull(done)
+        });
+
+        it('it works on lists of non-references', (done) => {
+
+            db.store = {};
+            hl.merge([
+                    ps.add('/v1/nationals-live/6679834', 3, '{ "data": "this is just some data3" }'),
+                    ps.add('/v1/nationals-live/6679834', 1, '{ "data": "this is just some data1" }'),
+                    ps.add('/v1/nationals-live/6679834', 2, '{ "data": "this is just some data2" }'),
+                    ps.add('/v1/nationals-live/6679834', 0, '{ "data": "this is just some data0" }'),
+                ])
+                .collect()
+                .flatMap(() => ps.get('/v1/nationals-live/6679834'))
+                .map(_ => {
+                    assert.deepEqual(_, [
+                        {"data": "this is just some data0"},
+                        {"data": "this is just some data1"},
+                        {"data": "this is just some data2"},
+                        {"data": "this is just some data3"}
+                    ]);
+                })
+                .pull(done)
+        });
+
         it('filters lists', (done)=> {
-            ps.db = save["/v1/nationals-live/6679834 has 4 items"];
+            ps.db = save["/v1/nationals-live/6679834 has 4 items"]; //TODO shouldn't be dependent on previous test
             assert(R.has('add', ps));
             hl.merge([
                     ps.get('/v1/nationals-live/6679834[1|2]')
