@@ -308,7 +308,7 @@ describe('unit tests', () => {
 
         it('put is idempotent', (done)=> {
             assert(R.has('put', ps));
-            ps.db = save["put /v1/nationals-live/6679834/130"];
+            ps.db = save["put /v1/nationals-live/6679834/130"]; //TODO shouldn't be dependent on previous tests
             ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data" }')
                 .map(() => {
                     assert.deepEqual(ps.db, save["put /v1/nationals-live/6679834/130"])
@@ -335,7 +335,7 @@ describe('unit tests', () => {
 
         it('has a get method', (done)=> {
             assert(R.has('get', ps));
-            ps.db = save["put /v1/nationals-live/6679834/130"];
+            ps.db = save["put /v1/nationals-live/6679834/130"]; //TODO shouldn't be dependent on previous tests
             ps.get('/v1/nationals-live/6679834/130')
                 .map(_ => {
                     assert.ok(_);
@@ -356,7 +356,7 @@ describe('unit tests', () => {
 
         it('has a del method', (done)=> {
             assert(R.has('del', ps));
-            ps.db = save["put /v1/nationals-live/6679834/130"];
+            ps.db = save["put /v1/nationals-live/6679834/130"]; //TODO shouldn't be dependent on previous tests
             ps.del('/v1/nationals-live/6679834/130')
                 .map(() => {
                     assert.notOk(ps.db['/v1/nationals-live/6679834/130'])
@@ -376,7 +376,7 @@ describe('unit tests', () => {
 
         it('add is idempotent', (done)=> {
             assert(R.has('add', ps));
-            ps.db = save["add to /v1/nationals-live/6679834"];
+            ps.db = save["add to /v1/nationals-live/6679834"]; //TODO shouldn't be dependent on previous tests
             ps.add('/v1/nationals-live/6679834', 0, '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.deepEqual(ps.db, save["add to /v1/nationals-live/6679834"]);
@@ -386,7 +386,7 @@ describe('unit tests', () => {
 
         it('has a rem method', (done)=> {
             assert(R.has('rem', ps));
-            ps.db = save["add to /v1/nationals-live/6679834"];
+            ps.db = save["add to /v1/nationals-live/6679834"]; //TODO shouldn't be dependent on previous tests
             ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.notOk(ps.db['/v1/nationals-live/6679834']['${/v1/nationals-live/6679834/130}']);
@@ -397,7 +397,7 @@ describe('unit tests', () => {
 
         it('rem is idempotent', (done)=> {
             assert(R.has('rem', ps));
-            ps.db = save["rem on /v1/nationals-live/6679834"];
+            ps.db = save["rem on /v1/nationals-live/6679834"]; //TODO shouldn't be dependent on previous tests
             ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
                 .map(() => {
                     assert.deepEqual(ps.db, save["rem on /v1/nationals-live/6679834"])
@@ -406,9 +406,6 @@ describe('unit tests', () => {
         });
 
         it('get works on lists', (done)=> {
-            ps.db = save["add to /v1/nationals-live/6679834"];
-            assert(R.has('add', ps));
-            
             hl.merge([
                     ps.add('/v1/nationals-live/6679834', 3, '${/v1/nationals-live/6679834/133}'),
                     ps.add('/v1/nationals-live/6679834', 1, '${/v1/nationals-live/6679834/131}'),
@@ -439,24 +436,22 @@ describe('unit tests', () => {
 
             db.store = {};
             hl.merge([
-                    ps.add('/v1/nationals-live/6679834', 3, '{ "data": "this is just some data3", "image": { "ref": "${/v1/nationals-live/6679834/133}" } }'),
-                    ps.add('/v1/nationals-live/6679834', 1, '{ "data": "this is just some data1", "image": { "ref": "${/v1/nationals-live/6679834/131}" } }'),
-                    ps.add('/v1/nationals-live/6679834', 2, '{ "data": "this is just some data2", "image": { "ref": "${/v1/nationals-live/6679834/132}" } }'),
-                    ps.add('/v1/nationals-live/6679834', 0, '{ "data": "this is just some data0", "image": { "ref": "${/v1/nationals-live/6679834/130}" } }'),
-                    ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some data0" }'),
-                    ps.put('/v1/nationals-live/6679834/131', '{ "data": "this is just some data1" }'),
-                    ps.put('/v1/nationals-live/6679834/132', '{ "data": "this is just some data2" }'),
-                    ps.put('/v1/nationals-live/6679834/133', '{ "data": "this is just some data3" }')
+                    ps.add('/v1/nationals-live/6679834', 3, '{ "data": "this is just some data3", "image": ${/v1/nationals-live/6679834/133;null} }'),
+                    ps.add('/v1/nationals-live/6679834', 1, '{ "data": "this is just some data1", "image": ${/v1/nationals-live/6679834/131;null} }'),
+                    ps.add('/v1/nationals-live/6679834', 2, '{ "data": "this is just some data2", "image": ${/v1/nationals-live/6679834/132;null} }'),
+                    ps.add('/v1/nationals-live/6679834', 0, '{ "data": "this is just some data0", "image": ${/v1/nationals-live/6679834/130;null} }'),
+                    ps.put('/v1/nationals-live/6679834/130', '{ "data": "this is just some image data0" }'),
+                    ps.put('/v1/nationals-live/6679834/131', '{ "data": "this is just some image data1" }'),
+                    ps.put('/v1/nationals-live/6679834/132', '{ "data": "this is just some image data2" }'),
+                    ps.put('/v1/nationals-live/6679834/133', '{ "data": "this is just some image data3" }')
                 ])
                 .collect()
                 .flatMap(() => ps.get('/v1/nationals-live/6679834'))
-                .map(_ => {
-                    assert.deepEqual(_, [
-                        {"data": "this is just some data0"},
-                        {"data": "this is just some data1"},
-                        {"data": "this is just some data2"},
-                        {"data": "this is just some data3"}
-                    ]);
+                .map(list => {
+                    console.log(list);
+                    assert.equal(list.length, 4);
+                    assert.equal(list[0].data, "this is just some data0");
+                    assert.equal(list[0].image.data, "this is just some image data0");
                 })
                 .pull(done)
         });
@@ -484,7 +479,7 @@ describe('unit tests', () => {
         });
 
         it('filters lists', (done)=> {
-            ps.db = save["/v1/nationals-live/6679834 has 4 items"]; //TODO shouldn't be dependent on previous test
+            ps.db = save["/v1/nationals-live/6679834 has 4 items"]; //TODO shouldn't be dependent on previous tests
             assert(R.has('add', ps));
             hl.merge([
                     ps.get('/v1/nationals-live/6679834[1|2]')
