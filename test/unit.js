@@ -178,7 +178,7 @@ describe('unit tests', () => {
             describe("runs the test", () => {
                 it("runs hydrateKey", done => {
                     hydrateKey({}, 'list', [])
-                        .tap(console.log)
+                        //.tap(console.log)
                         .pull(done)
                 });
             });
