@@ -1,4 +1,4 @@
-FROM node:4.1.2
+FROM mhart/alpine-node:5.9.0
 
 COPY package.json /src/package.json
 WORKDIR /src

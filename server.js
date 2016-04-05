@@ -4,8 +4,7 @@ var db = require('./lib/db');
 var config = require('config');
 var logger = require('winston');
 var morgan = require('morgan');
-
-logger.info('Config : %j', config, {});
+logger.info('Config', config);
 
 function translateAPIMethodName(APIname) {
     return APIname.toUpperCase() === 'DEL' ? 'DELETE' : APIname.toUpperCase();
@@ -23,7 +22,7 @@ function useAPI(prefix, server) {
 
 var server = restify.createServer();
 
-server.use(morgan('dev'))
+server.use(morgan('info: method=:method url=:url status=:status response-time=:response-time'))
 
 server.use(function crossOrigin(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
