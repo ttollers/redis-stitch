@@ -2,7 +2,8 @@ var R = require('ramda');
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
-var logger = require('winston');
+var logger = require('winston').loggers.get('elasticsearch');
+logger.transports.console.timestamp = true;
 var morgan = require('morgan');
 logger.info('Config', config);
 
@@ -15,14 +16,14 @@ function useAPI(prefix, server) {
     for (var method in api) {
         if (api.hasOwnProperty(method) && R.contains(translateAPIMethodName(method), config.allowedMethods)) {
             server[method](new RegExp('\/' + prefix + '\/.+'), api[method]);
-            logger.info('Adding method '+ translateAPIMethodName(method) + ' on endpoint /' + prefix + '/');
+            logger.info('Adding method ' + translateAPIMethodName(method) + ' on endpoint /' + prefix + '/');
         }
     }
 }
 
 var server = restify.createServer();
 
-server.use(morgan('info: method=:method url=:url status=:status response-time=:response-time'))
+server.use(morgan(':date[iso] - info: method=:method url=:url status=:status response-time=:response-time'))
 
 server.use(function crossOrigin(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -36,7 +37,7 @@ server.use(restify.queryParser());
 useAPI('v1', server);
 
 server.on('uncaughtException', function(req, res, route, err) {
-    logger.error(err.stack);
+    logger.error('ERROR', {}, err.stack);
     res.send(new restify.InternalServerError());
     res.end();
 });
@@ -44,5 +45,8 @@ server.on('uncaughtException', function(req, res, route, err) {
 
 db.connect();
 server.listen(config.server.port, function() {
-    logger.info('%s listening at %s', server.name, server.url, {});
+    logger.info('server listening', {
+        server_name: server.name,
+        server_url: server.url
+    });
 });
