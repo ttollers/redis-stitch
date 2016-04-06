@@ -7,7 +7,6 @@ var v1 = rewire('../lib/v1');
 var R = require('ramda');
 var hl = require('highland');
 var request = require('supertest');
-
 var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
@@ -281,7 +280,6 @@ describe('unit tests', () => {
                             .end(done);
                     })
             });
-
 
             it('should get string data saved in redis', (done) => {
                 deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
