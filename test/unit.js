@@ -308,6 +308,35 @@ describe('unit tests', () => {
 
         });
 
+        describe("should not crash on 404s - REDIS ONLY", () => {
+            //this test creates a proper node server. Mocha kills all processes at the end of the test
+
+            // as a real server is created, this test must have a redis instance and
+            // port 8080 open. If process.env.USE_REDIS is set to false, this test is skipped
+            if(process.env.USE_REDIS) {
+
+                var sa = require("superagent");
+                before(done => {
+                    require("../server.js");
+                    done();
+                });
+
+                it('should 404 and not crash on nested resources', (done) => {
+                    db.delKey("no-ref")
+                        .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world", "${no-ref}"]))
+                        .pull(() => {
+                            sa.get('http://localhost:8080/v1/hello/world')
+                                .end((err) => {
+                                    assert.equal(err.status, 404);
+                                    done();
+                                });
+                        })
+                });
+            } else {
+                it("skips this test as it requires redis", done => done());
+            }
+        });
+
         describe('put value', () => {
             it('should put a value into the db', (done) => {
                 db.delKey("/v1/hello/world")
