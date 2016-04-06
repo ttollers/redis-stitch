@@ -23,7 +23,9 @@ function useAPI(prefix, server) {
 
 var server = restify.createServer();
 
-server.use(morgan(':date[iso] - info: method=:method url=:url status=:status response-time=:response-time'))
+server.use(morgan(':date[iso] - info: method=:method, url=:url', {
+    immediate: true
+}))
 
 server.use(function crossOrigin(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
