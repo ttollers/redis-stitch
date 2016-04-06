@@ -35,7 +35,7 @@ function hydrateString(local, string) {
                             }
                             else push(null, R.assoc("value", '[' + list.toString() + ']', obj));
                             push(null, hl.nil);
-                        })
+                        });
                 } else {
                     return hl([R.assoc("value", val, obj)]);
                 }
@@ -55,7 +55,7 @@ function hydrateString(local, string) {
         .reduce(splits, populateArrayWithValues)
         .flatMap(function (x) {
             return hydrateString(local, x.join(""));
-        })
+        });
 }
 
 // if the reference contained "props" (i.e. ${ref,prop1,prop2} fill these values
@@ -94,7 +94,7 @@ const checkLocalStorage = R.curry((local, i, obj) => {
     else if (R.has(obj.key, local)) {
         // recursive function
         return splitStringByRef(local[obj.key])
-            .map(createReferenceObject(local, ++i))
+            .map(createReferenceObject(local, i + 1));
     }
     else if (local[obj.key] === nil) {
         // if the key has ben tested previously and doesn't exist don't test again
@@ -153,7 +153,7 @@ function sanitizeKey(input) {
 
 function removeRefTag(input) {
     const m = input.match(/\${(.*?)}/);
-    return m ? m[1] : ipnut;
+    return m ? m[1] : input;
 
 }
 
@@ -166,7 +166,7 @@ module.exports = {
                 res.write(output);
                 res.end();
                 next();
-            })
+            });
     },
     put(req, res, next) {
         const key = decodeURIComponent(req.path());
@@ -177,7 +177,7 @@ module.exports = {
                 if (R.isNil(score)) {
                     return db.setKey(key, value);
                 } else if (!isNaN(score)) {
-                    return db.addToKey(key, score, value)
+                    return db.addToKey(key, score, value);
                 } else {
                     throw new restify.BadRequestError('score must be a number');
                 }
@@ -186,7 +186,7 @@ module.exports = {
                 res.writeHead(204);
                 res.end();
                 return next();
-            })
+            });
     },
     del(req, res, next) {
         const key = decodeURIComponent(req.path());
@@ -200,6 +200,6 @@ module.exports = {
                 res.writeHead(204);
                 res.end();
                 return next();
-            })
+            });
     }
 };
