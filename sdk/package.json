@@ -1,18 +1,13 @@
 {
   "name": "presentation-service",
-  "version": "1.1.1",
-  "description": "",
+  "version": "1.2.0",
+  "description": "SDK for the presentation service",
   "main": "sdk.js",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "test": "mocha --recursive test/",
-    "lint": "jshint sdk.js",
-    "pretest": "npm run lint",
-    "start": "node server.js"
+    "lint": "jshint sdk.js lib/",
+    "pretest": "npm run lint"
   },
-  "author": "Dayo Adeyemi <thedayoadeyemi@gmail.com> (https://github.com/dayoadeyemi)",
   "license": "ISC",
   "dependencies": {
     "config": "^1.17.1",

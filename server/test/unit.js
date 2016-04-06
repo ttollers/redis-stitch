@@ -11,6 +11,7 @@ var restify = require('restify');
 
 function redisOrFaker(redis, db) {
     if (redis === "true") {
+        console.log('Using redis for test database.')
         // use a local version of redis listening on port 6379
         db.connect();
         return db;
