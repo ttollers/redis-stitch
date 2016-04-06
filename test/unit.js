@@ -8,6 +8,8 @@ var R = require('ramda');
 var hl = require('highland');
 var request = require('supertest');
 var restify = require('restify');
+var logger = require('winston').loggers.get('elasticsearch');
+logger.transports.console.silent = true;
 
 // TODO: these tests should be modified to not use db.store and should instead use the api to get/set vaules
 
