@@ -291,9 +291,7 @@ describe('unit tests', () => {
                     });
             })
         });
-
     });
-
 
     describe('v1 api', () => {
         var restify = require('restify');
@@ -346,7 +344,7 @@ describe('unit tests', () => {
 
             // as a real server is created, this test must have a redis instance and
             // port 8080 open. If process.env.USE_REDIS is set to false, this test is skipped
-            if (process.env.USE_REDIS) {
+            if(process.env.USE_REDIS) {
 
                 var sa = require("superagent");
                 before(done => {
