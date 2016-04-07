@@ -70,7 +70,7 @@ var catchRestErr = function (cb) {
             }
             return cb(null, output);
         } else if (res.statusCode === 204) {
-            return cb(null, 'done');
+            return cb(null, res.header.Location);
         } else {
             if(err) res = err.response;
             var e = new Error(res.body.message);

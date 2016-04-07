@@ -35,7 +35,6 @@ describe('unit tests', () => {
 
         it('puts strings and returns the strings on a get', (done) => {
             ps.put('/v1/stringAddGet', 'this is just some data')
-                .tap(assert.ok)
                 .flatMap(() => ps.get('/v1/stringAddGet'))
                 .tap(assert.ok)
                 .tap(assertEquals('this is just some data'))
@@ -44,9 +43,7 @@ describe('unit tests', () => {
 
         it('puts a new string and returns the new string on a get', (done) => {
             ps.put('/v1/stringAddGet2', '"this is just some data"')
-                .tap(assert.ok)
                 .flatMap(() => ps.put('/v1/stringAddGet2', 'this is just some data 2'))
-                .tap(assert.ok)
                 .flatMap(() => ps.get('/v1/stringAddGet2'))
                 .tap(assert.ok)
                 .tap(assertEquals('this is just some data 2'))
@@ -97,7 +94,6 @@ describe('unit tests', () => {
                 .flatMap(() => ps.add('/v1/remTest', 0, 'some data 0'))
                 .flatMap(() => ps.add('/v1/remTest', 1, 'some data 1'))
                 .flatMap(() => ps.rem('/v1/remTest', 'some data 1'))
-                .tap(assert.ok)
                 .flatMap(() => ps.get('/v1/remTest'))
                 .tap(assert.ok)
                 .tap(assertEquals('[some data 0]'))

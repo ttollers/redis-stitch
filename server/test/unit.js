@@ -8,6 +8,8 @@ var R = require('ramda');
 var hl = require('highland');
 var request = require('supertest');
 var restify = require('restify');
+var logger = require('winston').loggers.get('elasticsearch');
+logger.transports.console.silent = true;
 
 function redisOrFaker(redis, db) {
     if (redis === "true") {
@@ -214,7 +216,6 @@ describe('unit tests', () => {
                 .pull(done)
         });
 
-
         it('CRON-280 should no longer happen', (done) => {
             deleteAndSetDb("setKey", ["key", "${foo;null}"])
                 .flatMap(deleteAndSetDb("setKey", ["foo", '{"man": "${bar,a;}", "choo": "${bar,b;}" }']))
@@ -256,8 +257,39 @@ describe('unit tests', () => {
                 })
         });
 
-    });
+        describe("Edge case when string is added to database inbetween getMultiple and listKey", () => {
+            var sinon = require("sinon");
+            var edgeV1 = rewire('../lib/v1');
+            var edgeHydrateString = edgeV1.__get__("hydrateString");
 
+            edgeV1.__set__("db", {
+                "getMultiple": sinon.stub(),
+                "listKey": sinon.stub()
+            });
+
+            edgeV1.__set__("db", {
+                "getMultiple": sinon.stub(),
+                "listKey": sinon.stub()
+            });
+            var edgeDb = edgeV1.__get__("db");
+
+            edgeDb.getMultiple.onCall(0).returns(hl([[null]]));
+            edgeDb.getMultiple.onCall(1).returns(hl([["data"]]));
+
+            var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+            e.code = 'WRONGTYPE';
+
+            edgeDb.listKey.returns(hl((push) => push(e)));
+
+            it("should loop back if get a wrongType error", (done) => {
+                edgeHydrateString({}, "${key}")
+                    .pull((err, res) => {
+                        assert.equal(res, "data");
+                        done(err);
+                    });
+            })
+        });
+    });
 
     describe('v1 api', () => {
         var restify = require('restify');
@@ -303,6 +335,35 @@ describe('unit tests', () => {
                     })
             });
 
+        });
+
+        describe("should not crash on 404s - REDIS ONLY", () => {
+            //this test creates a proper node server. Mocha kills all processes at the end of the test
+
+            // as a real server is created, this test must have a redis instance and
+            // port 8080 open. If process.env.USE_REDIS is set to false, this test is skipped
+            if(process.env.USE_REDIS) {
+
+                var sa = require("superagent");
+                before(done => {
+                    require("../server.js");
+                    done();
+                });
+
+                it('should 404 and not crash on nested resources', (done) => {
+                    db.delKey("no-ref")
+                        .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world", "${no-ref}"]))
+                        .pull(() => {
+                            sa.get('http://localhost:8080/v1/hello/world')
+                                .end((err) => {
+                                    assert.equal(err.status, 404);
+                                    done();
+                                });
+                        })
+                });
+            } else {
+                it("skips this test as it requires redis", done => done());
+            }
         });
 
         describe('put value', () => {

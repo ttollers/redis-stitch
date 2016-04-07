@@ -5,6 +5,17 @@ var hl = require('highland');
 var restify = require('restify');
 var db = require('./db');
 var nil = {}; // used to flag queried nonexistent keys in local cache
+var logger = require('winston').loggers.get('elasticsearch');
+logger.transports.console.timestamp = true;
+
+var logOutput = R.curry((msg, direction, req, data) => {
+    logger.info(msg, {
+        method: req.method,
+        url: req.url,
+        direction: direction
+    });
+    return data;
+});
 
 /**
  * the workhorse for the hydration process. singularly recursive
@@ -27,10 +38,14 @@ function hydrateString(local, string) {
                 if (R.isNil(val)) {
                     return db.listKey(obj.key, obj.before, obj.after, obj.limit)
                         .consume((err, list, push) => {
-                            if (R.isEmpty(list)) {
+                            if (err) {
+                                if (err.code === 'WRONGTYPE') push(null, R.assoc("value", obj.key, obj));
+                                else push (err);
+                            }
+                            else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
                                 else {
-                                    push(err, R.assoc("value", null, obj));
+                                    push(null, R.assoc("value", null, obj));
                                 }
                             }
                             else push(null, R.assoc("value", '[' + list.toString() + ']', obj));
@@ -48,6 +63,7 @@ function hydrateString(local, string) {
             if (R.isNil(obj.value)) throw new restify.ResourceNotFoundError([obj.key].concat(obj.props).reverse().join(' of ') + ' not available');
             else {
                 const value = R.is(String, obj.value) ? obj.value : JSON.stringify(obj.value);
+                if(obj.key === value) return "${" + value + "}";
                 local[obj.key] = value;
                 return value;
             }
@@ -172,6 +188,7 @@ module.exports = {
         const key = decodeURIComponent(req.path());
         const score = req.query.score && parseInt(req.query.score);
         hl(req)
+            .tap(logOutput("endpoint", "incoming", req))
             .reduce('', R.add)
             .flatMap(value => {
                 if (R.isNil(score)) {
@@ -182,9 +199,10 @@ module.exports = {
                     throw new restify.BadRequestError('score must be a number');
                 }
             })
+            .tap(logOutput("endpoint", "outgoing", req))
             .done(() => {
-                res.writeHead(204);
-                res.end();
+                res.setHeader('Location', req.url);
+                res.send(204);
                 return next();
             });
     },

@@ -58,4 +58,12 @@ All parameters are optional.
 
 
 #Contributors
-[Dayo Adeyemi](https://www.npmjs.com/~dayoadeyemi) 
+[Dayo Adeyemi](https://www.npmjs.com/~dayoadeyemi)
+
+
+# Deploying to presentation service
+ publish latest version to npm
+ docker build -t trinitymirror/presentation-service:version .
+ docker push trinitymirror/presentation-service:version
+ update the presentation version in /live-centre/live-centre-launcher/config/default.json
+ deploy the live-centre env bitbucket trigger
