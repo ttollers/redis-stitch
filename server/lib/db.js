@@ -46,7 +46,7 @@ module.exports = {
         };
     },
     getKey: function(key) {
-        
+
         if (this.store[key] === void 0) return hl([null]);
         else if (R.is(String, this.store[key])) return hl([this.store[key]]);
         else {

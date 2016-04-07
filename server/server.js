@@ -4,6 +4,7 @@ var R = require('ramda');
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
+if(R.isEmpty(config)) config = require('./config/default.json');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.timestamp = true;
 var morgan = require('morgan');
@@ -44,8 +45,10 @@ server.on('uncaughtException', function(req, res, route, err) {
     res.end();
 });
 
+if(require.main === module) {
+    db.connect();
+}
 
-db.connect();
 server.listen(config.server.port, function() {
     logger.info('server listening', {
         server_name: server.name,
