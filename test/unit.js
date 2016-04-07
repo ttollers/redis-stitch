@@ -291,7 +291,7 @@ describe('unit tests', () => {
                     });
             })
         });
-        
+
     });
 
 
@@ -346,7 +346,7 @@ describe('unit tests', () => {
 
             // as a real server is created, this test must have a redis instance and
             // port 8080 open. If process.env.USE_REDIS is set to false, this test is skipped
-            if(process.env.USE_REDIS) {
+            if (process.env.USE_REDIS) {
 
                 var sa = require("superagent");
                 before(done => {
@@ -565,7 +565,8 @@ describe('unit tests', () => {
             ps.db = save["add to /v1/nationals-live/6679834"]; //TODO shouldn't be dependent on previous tests
             ps.rem('/v1/nationals-live/6679834', '${/v1/nationals-live/6679834/130}')
                 .map(() => {
-                    assert.notOk(ps.db['/v1/nationals-live/6679834']['${/v1/nationals-live/6679834/130}']);
+                    // as there was only one item (which is now deleted) the whole list is removed
+                    assert.notOk(ps.db['/v1/nationals-live/6679834']);
                     save["rem on /v1/nationals-live/6679834"] = R.clone(ps.db);
                 })
                 .pull(done)
@@ -579,6 +580,20 @@ describe('unit tests', () => {
                     assert.deepEqual(ps.db, save["rem on /v1/nationals-live/6679834"])
                 })
                 .pull(done)
+        });
+
+        it("can rem by score method", (done) => {
+            ps.db = {
+                '/v1/list': {
+                    '${/v1/hello/world0}': 0,
+                    '${/v1/hello/world1}': 1
+                }
+            };
+            ps.rem("/v1/list", 0)
+                .tap(() => {
+                    assert.equal(Object.keys(ps.db["/v1/list"]).length, 1);
+                })
+                .pull(done);
         });
 
         it('get works on lists', (done)=> {
