@@ -8,7 +8,7 @@ module.exports = function (presentationServiceUrl) {
     var request = require('superagent');
 
     if (R.isNil(presentationServiceUrl)) { // Test code
-        require('../server/server.js');
+        require('presentation-service-server');
         presentationServiceUrl = 'http://localhost:8080';
     }
 
