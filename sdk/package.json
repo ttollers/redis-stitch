@@ -1,6 +1,6 @@
 {
   "name": "presentation-service",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "SDK for the presentation service",
   "main": "sdk.js",
   "scripts": {
