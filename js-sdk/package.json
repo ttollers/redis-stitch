@@ -20,6 +20,6 @@
     "jshint": "^2.9.1",
     "mocha": "^2.4.5",
     "rewire": "^2.4.0",
-    "presentation-service-server": "2.0.5"
+    "presentation-service-server": "2.0.7"
   }
 }
