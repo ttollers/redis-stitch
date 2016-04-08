@@ -1,6 +1,6 @@
 {
   "name": "presentation-service-server",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Server component for the presentation service",
   "main": "server.js",
   "scripts": {
@@ -21,7 +21,6 @@
     "winston": "^2.1.1"
   },
   "devDependencies": {
-    "superagent": "^1.4.0",
     "supertest": "^1.1.0",
     "chai": "^3.4.1",
     "jshint": "^2.9.1",

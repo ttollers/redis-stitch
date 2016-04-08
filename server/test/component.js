@@ -3,60 +3,45 @@
 var rewire = require('rewire');
 var chai = require('chai');
 var assert = chai.assert;
-var request = require('supertest');
 var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
+var hl = require('highland');
 logger.transports.console.silent = true;
 
 var config = {
     "redis": {"host": "127.0.0.1", "port": 6379},
     "server": {"port": 8080},
     "allowedMethods": ["GET", "PUT", "DELETE"],
-    "database": process.env.USE_REDIS ? "redis" : "fakeRedis"
+    "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
 };
 
-var v1Module = rewire('../lib/v1');
-var v1 = v1Module(config);
-var db = v1Module.__get__("db");
+var server = rewire("../server.js");
+server(config);
+var app = server.__get__('server');
+var request = require('supertest')(app);
 
-function deleteAndSetDb(type, values) {
-    return db.delKey(values[0])
-        .flatMap(db[type].apply(db, values));
-}
+var set = hl.wrapCallback((key, value, cb) => {
+    request.del(key).end(() => request.put(key).send(value).end(cb));
+});
 
-describe("should not crash on 404s - REDIS ONLY", () => {
-    //this test creates a proper node server. Mocha kills all processes at the end of the test
-    var sa = require("superagent");
-    before(done => {
-        require("../server.js")(config);
-        done();
-    });
-    it('should 404 and not crash on nested resources', (done) => {
-        db.delKey("no-ref")
-            .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world", "${no-ref}"]))
-            .pull(() => {
-                sa.get('http://localhost:8080/v1/hello/world')
-                    .end((err) => {
-                        assert.equal(err.status, 404);
-                        done();
-                    });
-            });
-    });
+var add = hl.wrapCallback((key, score, value, cb) => {
+    request
+        .put(key)
+        .query({score: score})
+        .send(value)
+        .end(cb);
+});
+
+var del = hl.wrapCallback((key, cb) => {
+    request.del(key).end(cb);
 });
 
 describe('v1 api', () => {
-    var restify = require('restify');
-    var app = restify.createServer();
-    app.use(restify.queryParser());
-    app.get(/.*/, v1.get);
-    app.put(/.*/, v1.put);
-    app.del(/.*/, v1.del);
-
     describe('get', () => {
         it('should 404 when there is no data', (done) => {
-            db.delKey("/v1/hello/world")
+            del('/v1/hello/world')
                 .pull(() => {
-                    request(app)
+                    request
                         .get('/v1/hello/world')
                         .expect(404)
                         .end(done);
@@ -64,25 +49,24 @@ describe('v1 api', () => {
         });
 
         it('should get string data saved in redis', (done) => {
-            deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
-                .pull(() => {
-                    request(app)
-                        .get('/v1/hello/world')
-                        .expect(200, 'my value')
-                        .end(done);
-                })
+            set("/v1/hello/world", "my value").pull(() => {
+                request
+                    .get('/v1/hello/world')
+                    .expect(200, 'my value')
+                    .end(done);
+            });
         });
 
         it('should get list data saved in redis', (done) => {
-            deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world2", "my value2"]))
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world3", "my value3"]))
-                .flatMap(deleteAndSetDb("addToKey", ["/v1/list", 0, "${/v1/hello/world}"]))
-                .flatMap(db.addToKey("/v1/list", 2, "${/v1/hello/world2}"))
-                .flatMap(db.addToKey("/v1/list", 3, "${/v1/hello/world3}"))
+            set("/v1/hello/world", "my value")
+                .flatMap(set("/v1/hello/world2", "my value2"))
+                .flatMap(set("/v1/hello/world3", "my value3"))
+                .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
+                .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
+                .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
                 .pull(() => {
-                    request(app)
-                        .get('/v1/list')
+                    request
+                        .get("/v1/list")
                         .expect(200, '[my value,my value2,my value3]')
                         .end(done);
                 })
@@ -91,95 +75,84 @@ describe('v1 api', () => {
 
     describe('put value', () => {
         it('should put a value into the db', (done) => {
-            db.delKey("/v1/hello/world")
+            del("/v1/hello/world")
                 .pull(() => {
-                    request(app)
+                    request
                         .put('/v1/hello/world')
                         .send('my value')
                         .expect(204)
-                        .end(() => {
-                            db.getKey('/v1/hello/world')
-                                .tap(x => assert.equal(x, 'my value'))
-                                .pull(done);
-                        });
+                        .end(done);
                 });
-        });
-    });
-
-    describe('put list', () => {
-        it('should put a value into a list the db', (done) => {
-            db.delKey("/v1/hello/world")
-                .pull(() => {
-                    request(app)
-                        .put('/v1/hello/world')
-                        .query({score: 0})
-                        .send('my value')
-                        .expect(204)
-                        .end(() => {
-                            db.listKey('/v1/hello/world', Infinity, -Infinity, Infinity)
-                                .tap(x => assert.deepEqual(x, ["my value"]))
-                                .pull(done);
-                        });
-                })
         });
     });
 
     describe('del', () => {
         it('should delete values from the db', (done) => {
-            deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
+            set("/v1/hello/world", "my value")
                 .pull(() => {
-                    request(app)
+                    request
                         .del('/v1/hello/world')
                         .expect(204)
                         .end(() => {
-                            db.getKey("/v1/hello/world")
-                                .pull((err, result) => {
-                                    assert.isNull(result);
-                                    done(err);
-                                })
+                            request
+                                .get('/v1/hello/world')
+                                .expect(404)
+                                .end(done);
                         });
                 })
         });
 
         it('should delete values from a list in the db', (done) => {
-
-            deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world2", "my value2"]))
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world3", "my value3"]))
-                .flatMap(deleteAndSetDb("addToKey", ["/v1/list", 0, "${/v1/hello/world}"]))
-                .flatMap(db.addToKey("/v1/list", 2, "${/v1/hello/world2}"))
-                .flatMap(db.addToKey("/v1/list", 3, "${/v1/hello/world3}"))
+            set("/v1/hello/world", "my value")
+                .flatMap(set("/v1/hello/world2", "my value2"))
+                .flatMap(set("/v1/hello/world3", "my value3"))
+                .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
+                .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
+                .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
                 .pull(() => {
-                    request(app)
+                    request
                         .del('/v1/list')
                         .expect(204)
                         .query({value: '${/v1/hello/world2}'})
                         .end(() => {
-                            db.listKey("/v1/list", Infinity, -Infinity, Infinity)
-                                .tap(x => assert.deepEqual(x.length, 2))
-                                .pull(done);
+                            request
+                                .get("/v1/list")
+                                .expect(200, "[my value,my value3]")
+                                .end(done);
                         });
                 });
         });
 
         it('should delete values from a list by score', (done) => {
-            deleteAndSetDb("setKey", ["/v1/hello/world", "my value"])
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world2", "my value2"]))
-                .flatMap(deleteAndSetDb("setKey", ["/v1/hello/world3", "my value3"]))
-                .flatMap(deleteAndSetDb("addToKey", ["/v1/list", 0, "${/v1/hello/world}"]))
-                .flatMap(db.addToKey("/v1/list", 2, "${/v1/hello/world2}"))
-                .flatMap(db.addToKey("/v1/list", 3, "${/v1/hello/world3}"))
+            set("/v1/hello/world", "my value")
+                .flatMap(set("/v1/hello/world2", "my value2"))
+                .flatMap(set("/v1/hello/world3", "my value3"))
+                .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
+                .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
+                .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
                 .pull(() => {
-                    request(app)
+                    request
                         .del('/v1/list')
                         .expect(204)
                         .query({value: 2})
                         .end(() => {
-                            db.listKey("/v1/list", Infinity, -Infinity, Infinity)
-                                .tap(x => assert.deepEqual(x.length, 2))
-                                .pull(done);
+                            request
+                                .get("/v1/list")
+                                .expect(200, "[my value,my value3]")
+                                .end(done);
                         });
-                })
+                });
         });
+    });
+
+    it("should not crash on nested 404s", () => {
+        del("no-ref")
+            .flatMap(set("/v1/hello/world", "${no-ref}"))
+            .pull(() => {
+                request
+                    .get('/v1/hello/world')
+                    .expect(404)
+                    .end(done);
+            });
     });
 });

@@ -1,5 +1,7 @@
 "use strict";
 
+var server;
+
 module.exports = function(config) {
     var R = require('ramda');
     var restify = require('restify');
@@ -22,7 +24,7 @@ module.exports = function(config) {
         }
     }
 
-    var server = restify.createServer();
+    server = restify.createServer();
 
     server.use(morgan(':date[iso] - info: method=:method, url=:url, status=:status, response-time=:response-time'));
 
