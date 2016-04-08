@@ -1,6 +1,6 @@
 {
   "name": "presentation-service",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "SDK for the presentation service",
   "main": "sdk.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "highland": "^2.5.1",
+    "highland": "^2.7.3",
     "ramda": "^0.18.0",
     "superagent": "^1.4.0",
     "winston": "^2.1.1"
@@ -20,6 +20,6 @@
     "jshint": "^2.9.1",
     "mocha": "^2.4.5",
     "rewire": "^2.4.0",
-    "presentation-service-server": "2.0.4"
+    "presentation-service-server": "2.0.5"
   }
 }
