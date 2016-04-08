@@ -5,34 +5,11 @@ var hl = require('highland');
 var stringify = require("./lib/stringify");
 
 module.exports = function (presentationServiceUrl) {
-    var request;
-    var getAndSetDb = {};
+    var request = require('superagent');
 
     if (R.isNil(presentationServiceUrl)) { // Test code
-        presentationServiceUrl = "";
-        var rewire = require('rewire');
-        var supertest = require('supertest');
-        var restify = require('restify');
-        var app = restify.createServer();
-        var v1 = rewire('./lib/v1');
-        var db = v1.__get__('db');
-        request = supertest(app);
-        app.use(restify.queryParser());
-        app.get(/.*/, v1.get);
-        app.put(/.*/, v1.put);
-        app.del(/.*/, v1.del);
-
-        getAndSetDb = {
-            get: function () {
-                return db.store;
-            },
-            set: function (_db) {
-                db.store = _db;
-            }
-        };
-    }
-    else { // Live code
-        request = require('superagent');
+        require('presentation-service-server');
+        presentationServiceUrl = 'http://localhost:8080';
     }
 
     var returnObj = {
@@ -62,11 +39,15 @@ module.exports = function (presentationServiceUrl) {
                 .end(catchRestErr(cb));
         })
     };
-    return Object.defineProperty(returnObj, "db", getAndSetDb);
+    return returnObj;
 };
 
 var put = function (request, psUrl) {
     return hl.wrapCallback(function (key, value, cb) {
+        if(R.type(value) !== 'String') {
+            cb('Non-string value passed to put method');
+            return;
+        }
         request
             .put(psUrl + key)
             .send(value)
@@ -81,8 +62,7 @@ var putObject = R.curry(function (request, psUrl, key, value) {
 var catchRestErr = function (cb) {
     return function (err, res) {
         var output;
-        if (err) return cb(err);
-        else if (res.statusCode === 200) {
+        if (res.statusCode === 200) {
             try {
                 output = JSON.parse(res.text);
             } catch (e) {
@@ -90,8 +70,9 @@ var catchRestErr = function (cb) {
             }
             return cb(null, output);
         } else if (res.statusCode === 204) {
-            return cb(null, res.header['Location']);
+            return cb(null, res.header.Location);
         } else {
+            if(err) res = err.response;
             var e = new Error(res.body.message);
             e.code = res.body.code;
             return cb(e);

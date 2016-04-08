@@ -1,0 +1,25 @@
+{
+  "name": "presentation-service",
+  "version": "2.0.5",
+  "description": "SDK for the presentation service",
+  "main": "sdk.js",
+  "scripts": {
+    "test": "mocha --recursive test/",
+    "lint": "jshint sdk.js lib/",
+    "pretest": "npm run lint"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "highland": "^2.7.3",
+    "ramda": "^0.18.0",
+    "superagent": "^1.4.0",
+    "winston": "^2.1.1"
+  },
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "jshint": "^2.9.1",
+    "mocha": "^2.4.5",
+    "rewire": "^2.4.0",
+    "presentation-service-server": "2.0.5"
+  }
+}

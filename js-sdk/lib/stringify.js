@@ -1,4 +1,3 @@
-
 "use strict";
 
 var R = require("ramda");
@@ -30,6 +29,6 @@ function stringify(presentation) {
     } else if (presentation === null) {
         return "null";
     } else return JSON.stringify(presentation);
-};
+}
 
 module.exports = stringify;
