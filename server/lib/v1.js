@@ -3,8 +3,6 @@
 var R = require('ramda');
 var hl = require('highland');
 var restify = require('restify');
-var db = require('./db');
-var nil = {}; // used to flag queried nonexistent keys in local cache
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.timestamp = true;
 
@@ -16,13 +14,62 @@ var logOutput = R.curry((msg, direction, req, data) => {
     });
     return data;
 });
+var db;
 
-/**
- * the workhorse for the hydration process. singularly recursive
- * @param {Object} local
- * @param {String} string
- * @returns {Stream<String>}
- */
+module.exports = function (config) {
+    db = require('./db')(config);
+
+    return {
+        get(req, res, next) {
+            const key = decodeURIComponent(req.path());
+            hydrateString({}, "${" + key + "}")
+                .stopOnError(e => next(e))
+                .each(output => {
+                    res.write(output);
+                    res.end();
+                    next();
+                });
+        },
+        put(req, res, next) {
+            const key = decodeURIComponent(req.path());
+            const score = req.query.score && parseInt(req.query.score);
+            hl(req)
+                .tap(logOutput("endpoint", "incoming", req))
+                .reduce('', R.add)
+                .flatMap(value => {
+                    if (R.isNil(score)) {
+                        return db.setKey(key, value);
+                    } else if (!isNaN(score)) {
+                        return db.addToKey(key, score, value);
+                    } else {
+                        throw new restify.BadRequestError('score must be a number');
+                    }
+                })
+                .tap(logOutput("endpoint", "outgoing", req))
+                .done(() => {
+                    res.setHeader('Location', req.url);
+                    res.send(204);
+                    return next();
+                });
+        },
+        del(req, res, next) {
+            const key = decodeURIComponent(req.path());
+
+            const stream = req.query.value == null ? db.delKey(key)
+                : isNaN(req.query.value) ? db.delFromKey(key, req.query.value)
+                : db.delFromKeyByScore(key, Number(req.query.value));
+
+            stream
+                .done(() => {
+                    res.writeHead(204);
+                    res.end();
+                    return next();
+                });
+        }
+    };
+};
+
+
 function hydrateString(local, string) {
     const splits = R.flatten(splitStringByRef(string)
         .map(createReferenceObject(local, 0)));
@@ -40,7 +87,7 @@ function hydrateString(local, string) {
                         .consume((err, list, push) => {
                             if (err) {
                                 if (err.code === 'WRONGTYPE') push(null, R.assoc("value", obj.key, obj));
-                                else push (err);
+                                else push(err);
                             }
                             else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
@@ -63,7 +110,7 @@ function hydrateString(local, string) {
             if (R.isNil(obj.value)) throw new restify.ResourceNotFoundError([obj.key].concat(obj.props).reverse().join(' of ') + ' not available');
             else {
                 const value = R.is(String, obj.value) ? obj.value : JSON.stringify(obj.value);
-                if(obj.key === value) return "${" + value + "}";
+                if (obj.key === value) return "${" + value + "}";
                 local[obj.key] = value;
                 return value;
             }
@@ -112,7 +159,7 @@ const checkLocalStorage = R.curry((local, i, obj) => {
         return splitStringByRef(local[obj.key])
             .map(createReferenceObject(local, i + 1));
     }
-    else if (local[obj.key] === nil) {
+    else if (local[obj.key] === {}) {
         // if the key has ben tested previously and doesn't exist don't test again
         if (R.isNil(obj.def)) throw new restify.ResourceNotFoundError(obj.key + ' not available');
         return obj.def;
@@ -170,54 +217,4 @@ function sanitizeKey(input) {
 function removeRefTag(input) {
     const m = input.match(/\${(.*?)}/);
     return m ? m[1] : input;
-
 }
-
-module.exports = {
-    get(req, res, next) {
-        const key = decodeURIComponent(req.path());
-        hydrateString({}, "${" + key + "}")
-            .stopOnError(e => next(e))
-            .each(output => {
-                res.write(output);
-                res.end();
-                next();
-            });
-    },
-    put(req, res, next) {
-        const key = decodeURIComponent(req.path());
-        const score = req.query.score && parseInt(req.query.score);
-        hl(req)
-            .tap(logOutput("endpoint", "incoming", req))
-            .reduce('', R.add)
-            .flatMap(value => {
-                if (R.isNil(score)) {
-                    return db.setKey(key, value);
-                } else if (!isNaN(score)) {
-                    return db.addToKey(key, score, value);
-                } else {
-                    throw new restify.BadRequestError('score must be a number');
-                }
-            })
-            .tap(logOutput("endpoint", "outgoing", req))
-            .done(() => {
-                res.setHeader('Location', req.url);
-                res.send(204);
-                return next();
-            });
-    },
-    del(req, res, next) {
-        const key = decodeURIComponent(req.path());
-
-        const stream = req.query.value == null ? db.delKey(key)
-            : isNaN(req.query.value) ? db.delFromKey(key, req.query.value)
-            : db.delFromKeyByScore(key, Number(req.query.value));
-
-        stream
-            .done(() => {
-                res.writeHead(204);
-                res.end();
-                return next();
-            });
-    }
-};

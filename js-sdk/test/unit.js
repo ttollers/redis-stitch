@@ -8,9 +8,9 @@ var hl = require('highland');
 
 var assertEquals = function (obj1) {
     return function (obj2) {
-        assert(R.equals(obj1,obj2));
+        assert(R.equals(obj1, obj2));
     }
-}
+};
 
 describe('unit tests', () => {
     describe('sdk', () => {
@@ -59,7 +59,7 @@ describe('unit tests', () => {
         });
 
         it('can put and get an object using the putObject method', (done)=> {
-            var obj = {"data":{"type": "un-stringified data"}};
+            var obj = {"data": {"type": "un-stringified data"}};
             ps.putObject('/v1/putObjectTest', obj)
                 .flatMap(() => ps.get('/v1/putObjectTest'))
                 .tap(assert.ok)
@@ -83,7 +83,7 @@ describe('unit tests', () => {
                 .flatMap(() => ps.add('/v1/objectListTest', 1, '{"data": "some data 1"}'))
                 .flatMap(() => ps.get('/v1/objectListTest'))
                 .tap(assert.ok)
-                .tap(assertEquals(['some data 0',{data:'some data 1'}]))
+                .tap(assertEquals(['some data 0', {data: 'some data 1'}]))
                 .pull(done)
         });
 
@@ -100,42 +100,42 @@ describe('unit tests', () => {
 
         it('resolves references on a get', (done) => {
             ps.put('/v1/simpleReferenceTest/main', '${/v1/simpleReferenceTest/linked}')
-                .flatMap(() => ps.putObject('/v1/simpleReferenceTest/linked', {"data":"this is just some data"}))
+                .flatMap(() => ps.putObject('/v1/simpleReferenceTest/linked', {"data": "this is just some data"}))
                 .flatMap(() => ps.get('/v1/simpleReferenceTest/main'))
                 .tap(assert.ok)
-                .tap(assertEquals({"data":"this is just some data"}))
+                .tap(assertEquals({"data": "this is just some data"}))
                 .pull(done)
         });
 
         it('resolves reference objects passed to putObject', (done) => {
-            ps.putObject('/v1/objectReferenceTest/main', {"data":"data", "innerData": {$ref:'${/v1/objectReferenceTest/linked}'}})
-                .flatMap(() => ps.putObject('/v1/objectReferenceTest/linked', {"data":"data"}))
+            ps.putObject('/v1/objectReferenceTest/main', {
+                    "data": "data",
+                    "innerData": {$ref: '${/v1/objectReferenceTest/linked}'}
+                })
+                .flatMap(() => ps.putObject('/v1/objectReferenceTest/linked', {"data": "data"}))
                 .flatMap(() => ps.get('/v1/objectReferenceTest/main'))
                 .tap(assert.ok)
-                .tap(assertEquals({"data":"data", "innerData": {"data":"data"}}))
+                .tap(assertEquals({"data": "data", "innerData": {"data": "data"}}))
                 .pull(done)
         });
 
         it('resolves references on lists', (done) => {
-            hl.merge([
-                    ps.del('/v1/referenceList'),
-                    ps.add('/v1/referenceList', 3, '${/v1/referenceList/3}'),
-                    ps.add('/v1/referenceList', 1, '${/v1/referenceList/1}'),
-                    ps.add('/v1/referenceList', 2, '${/v1/referenceList/2}'),
-                    ps.add('/v1/referenceList', 0, '${/v1/referenceList/0}'),
-                    ps.putObject('/v1/referenceList/0', { "data": "this is just some data0" }),
-                    ps.putObject('/v1/referenceList/1', { "data": "this is just some data1" }),
-                    ps.put('/v1/referenceList/2', '{ "data": "this is just some data2" }'),
-                    ps.put('/v1/referenceList/3', '{ "data": "this is just some data3" }')
-                ])
-                .collect()
+            hl(ps.del('/v1/referenceList'))
+                .flatMap(ps.add('/v1/referenceList', 3, '${/v1/referenceList/3}'))
+                .flatMap(ps.add('/v1/referenceList', 1, '${/v1/referenceList/1}'))
+                .flatMap(ps.add('/v1/referenceList', 2, '${/v1/referenceList/2}'))
+                .flatMap(ps.add('/v1/referenceList', 0, '${/v1/referenceList/0}'))
+                .flatMap(ps.putObject('/v1/referenceList/0', {"data": "this is just some data0"}))
+                .flatMap(ps.putObject('/v1/referenceList/1', {"data": "this is just some data1"}))
+                .flatMap(ps.put('/v1/referenceList/2', '{ "data": "this is just some data2" }'))
+                .flatMap(ps.put('/v1/referenceList/3', '{ "data": "this is just some data3" }'))
                 .flatMap(() => ps.get('/v1/referenceList'))
                 .tap(assertEquals([
-                        {"data": "this is just some data0"},
-                        {"data": "this is just some data1"},
-                        {"data": "this is just some data2"},
-                        {"data": "this is just some data3"}
-                    ]))
+                    {"data": "this is just some data0"},
+                    {"data": "this is just some data1"},
+                    {"data": "this is just some data2"},
+                    {"data": "this is just some data3"}
+                ]))
                 .pull(done)
         });
 
@@ -153,33 +153,32 @@ describe('unit tests', () => {
         });
 
         it('filters', (done) => {
-            hl.merge([
-                    ps.del('/v1/filterTest'),
-                    ps.add('/v1/filterTest', 0, '${/v1/filterTest/0}'),
-                    ps.add('/v1/filterTest', 1, '${/v1/filterTest/1}'),
-                    ps.add('/v1/filterTest', 2, '${/v1/filterTest/2}'),
-                    ps.add('/v1/filterTest', 3, '${/v1/filterTest/3}'),
-                    ps.put('/v1/filterTest/0', '0'),
-                    ps.put('/v1/filterTest/1', '1'),
-                    ps.put('/v1/filterTest/2', '2'),
-                    ps.put('/v1/filterTest/3', '3')
-                ])
+            hl(ps.del('/v1/filterTest'))
+                .flatMap(ps.add('/v1/filterTest', 0, '${/v1/filterTest/0}'))
+                .flatMap(ps.add('/v1/filterTest', 1, '${/v1/filterTest/1}'))
+                .flatMap(ps.add('/v1/filterTest', 2, '${/v1/filterTest/2}'))
+                .flatMap(ps.add('/v1/filterTest', 3, '${/v1/filterTest/3}'))
+                .flatMap(ps.put('/v1/filterTest/0', '0'))
+                .flatMap(ps.put('/v1/filterTest/1', '1'))
+                .flatMap(ps.put('/v1/filterTest/2', '2'))
+                .flatMap(ps.put('/v1/filterTest/3', '3'))
                 .flatMap(() => ps.get('/v1/filterTest[1|2]'))
-                .tap(assertEquals([1,2]))
+                .tap(assertEquals([1, 2]))
                 .flatMap(() => ps.get('/v1/filterTest[|2]'))
-                .tap(assertEquals([0,1,2]))
+                .tap(assertEquals([0, 1, 2]))
                 .flatMap(() => ps.get('/v1/filterTest[1|]'))
-                .tap(assertEquals([1,2,3]))
+                .tap(assertEquals([1, 2, 3]))
                 .flatMap(() => ps.get('/v1/filterTest^2'))
-                .tap(assertEquals([0,1]))
+                .tap(assertEquals([0, 1]))
                 .flatMap(() => ps.get('/v1/filterTest[1|]^2'))
-                .tap(assertEquals([1,2]))
+                .tap(assertEquals([1, 2]))
                 .pull(done)
         });
 
         it('rejects non-string values passed to put', (done) => {
-            ps.put('/v1/NonStringPutTest', {'data':'data'})
-                .stopOnError(err => {})
+            ps.put('/v1/NonStringPutTest', {'data': 'data'})
+                .stopOnError(err => {
+                })
                 .tap(() => assert.fail('Should have failed'))
                 .pull(done);
         });
