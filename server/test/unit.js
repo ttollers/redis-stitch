@@ -3,9 +3,7 @@
 var rewire = require('rewire');
 var chai = require('chai');
 var assert = chai.assert;
-var R = require('ramda');
 var hl = require('highland');
-var request = require('supertest');
 var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
@@ -14,7 +12,7 @@ var config = {
     "redis": {"host": "127.0.0.1", "port": 6379},
     "server": {"port": 8080},
     "allowedMethods": ["GET", "PUT", "DELETE"],
-    "database": process.env.USE_REDIS ? "fakeRedis" : "redis"
+    "database": process.env.USE_REDIS === true ? "redis" : "fakeRedis"
 };
 
 var v1Module = rewire('../lib/v1');
@@ -25,7 +23,6 @@ function deleteAndSetDb(type, values) {
     return db.delKey(values[0])
         .flatMap(db[type].apply(db, values));
 }
-
 
 describe('hydrateKey', () => {
 

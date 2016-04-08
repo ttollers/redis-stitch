@@ -12,7 +12,7 @@ var faker = fakeRedis.createClient();
 
 module.exports = function (config) {
 
-    var client = config.database === 'fakeredis' ? faker : initRealRedis(config);
+    var client = config.database === 'fakeRedis' ? faker : initRealRedis(config);
 
     return {
         getKey: (key) => {

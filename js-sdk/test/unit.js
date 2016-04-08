@@ -10,7 +10,7 @@ var assertEquals = function (obj1) {
     return function (obj2) {
         assert(R.equals(obj1, obj2));
     }
-}
+};
 
 describe('unit tests', () => {
     describe('sdk', () => {

@@ -13,7 +13,7 @@ module.exports = function (presentationServiceUrl) {
             "redis": {"host": "127.0.0.1", "port": 6379},
             "server": {"port": 8080},
             "allowedMethods": ["GET", "PUT", "DELETE"],
-            "database": process.env.USE_REDIS ? "fakeRedis" : "redis"
+            "database": "fakeRedis"
         };
 
         require('presentation-service-server')(config);
