@@ -5,8 +5,6 @@ var chai = require('chai');
 var assert = chai.assert;
 var R = require('ramda');
 var hl = require('highland');
-var request = require('supertest');
-var restify = require('restify');
 
 var assertEquals = function (obj1) {
     return function (obj2) {

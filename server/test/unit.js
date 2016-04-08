@@ -15,7 +15,7 @@ function redisOrFaker(redis, db) {
     if (redis === "true") {
         console.log('Using redis for test database.')
         // use a local version of redis listening on port 6379
-        db.connect();
+        db.connect({"redis": {"host": "127.0.0.1","port": 6379},"server": {"port": 8080},"allowedMethods": ["GET","PUT","DELETE"]});
         return db;
     } else {
         // use faker

@@ -4,11 +4,9 @@ var R = require('ramda');
 var restify = require('restify');
 var db = require('./lib/db');
 var config = require('config');
-if(R.isEmpty(config)) config = {
-   "redis": {"host": "127.0.0.1","port": 6379},
-   "server": {"port": 8080},
-   "allowedMethods": ["GET","PUT","DELETE"]
-};
+if (R.isEmpty(config)) {
+    config = {"redis": {"host": "127.0.0.1","port": 6379},"server": {"port": 8080},"allowedMethods": ["GET","PUT","DELETE"]};
+}
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.timestamp = true;
 var morgan = require('morgan');
@@ -50,7 +48,7 @@ server.on('uncaughtException', function(req, res, route, err) {
 });
 
 if(require.main === module) {
-    db.connect();
+    db.connect(config);
 }
 
 server.listen(config.server.port, function() {

@@ -9,8 +9,7 @@ hl.streamifyAll(redis.Multi.prototype);
 
 module.exports = {
     store: {},
-    connect: function() {
-        const config = require('config');
+    connect: function(config) {
         const PORT = config.redis.port;
         const HOST = config.redis.host;
         const client = redis.createClient(PORT, HOST);
