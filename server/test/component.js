@@ -4,13 +4,19 @@ var rewire = require('rewire');
 var chai = require('chai');
 var assert = chai.assert;
 var restify = require('restify');
-var logger = require('winston').loggers.get('elasticsearch');
+var sinon = require('sinon');
 var hl = require('highland');
+var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
 var config = {
-    "redis": {"host": "127.0.0.1", "port": 6379},
-    "server": {"port": 8080},
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "server": {
+        "port": 8080
+    },
     "allowedMethods": ["GET", "PUT", "DELETE"],
     "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
 };
@@ -27,7 +33,9 @@ var set = hl.wrapCallback((key, value, cb) => {
 var add = hl.wrapCallback((key, score, value, cb) => {
     request
         .put(key)
-        .query({score: score})
+        .query({
+            score: score
+        })
         .send(value)
         .end(cb);
 });
@@ -37,6 +45,22 @@ var del = hl.wrapCallback((key, cb) => {
 });
 
 describe('v1 api', () => {
+
+    before(() => {
+        var origStdoutWrite = process.stdout.write;
+        var logFilterPattern = /(info\:)|(ResourceNotFoundError)/; 
+
+        //filter log output 
+        sinon.stub(process.stdout, 'write', function() {
+            var args = Array.prototype.slice.call(arguments);
+            if (!logFilterPattern.test(args[0])) {
+                return origStdoutWrite.apply(process.stdout, args);
+            }
+        });
+    });
+
+    after(()=>process.stdout.write.restore());
+
     describe('get', () => {
         it('should 404 when there is no data', (done) => {
             del('/v1/hello/world')
@@ -113,7 +137,9 @@ describe('v1 api', () => {
                     request
                         .del('/v1/list')
                         .expect(204)
-                        .query({value: '${/v1/hello/world2}'})
+                        .query({
+                            value: '${/v1/hello/world2}'
+                        })
                         .end(() => {
                             request
                                 .get("/v1/list")
@@ -134,7 +160,9 @@ describe('v1 api', () => {
                     request
                         .del('/v1/list')
                         .expect(204)
-                        .query({value: 2})
+                        .query({
+                            value: 2
+                        })
                         .end(() => {
                             request
                                 .get("/v1/list")
