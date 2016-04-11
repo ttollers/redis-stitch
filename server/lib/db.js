@@ -40,7 +40,7 @@ module.exports = function (config) {
 
 function initFakeRedis(config) {
     var fakeRedis = require("fakeredis");
-    redis.fast = true;
+    fakeRedis.fast = true;
     hl.streamifyAll(fakeRedis.RedisClient.prototype);
     return fakeRedis.createClient();
 }
