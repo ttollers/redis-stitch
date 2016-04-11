@@ -5,16 +5,28 @@ var hl = require('highland');
 var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.timestamp = true;
+var db;
 
 var logOutput = R.curry((msg, direction, req, data) => {
     logger.info(msg, {
+        request_id: req.id(),
         method: req.method,
         url: req.url,
         direction: direction
     });
     return data;
 });
-var db;
+
+var logStreamExceptions = R.curry((req, err, push) => {
+    //error message for elasticsearch, with a correlation id
+    logger.error('endpoint', {
+        request_id: req.id(),
+        err_message: err.message
+    });
+    //output stack for cloudformation only
+    console.log(err.stack);
+    push(err, null);
+});
 
 module.exports = function (config) {
     db = require('./db')(config);
@@ -23,7 +35,8 @@ module.exports = function (config) {
         get(req, res, next) {
             const key = decodeURIComponent(req.path());
             hydrateString({}, "${" + key + "}")
-                .stopOnError(e => next(e))
+                .errors(logStreamExceptions(req))
+                .stopOnError(next)
                 .each(output => {
                     res.write(output);
                     res.end();
@@ -46,6 +59,8 @@ module.exports = function (config) {
                     }
                 })
                 .tap(logOutput("endpoint", "outgoing", req))
+                .errors(logStreamExceptions(req))
+                .stopOnError(next)
                 .done(() => {
                     res.setHeader('Location', req.url);
                     res.send(204);
@@ -60,6 +75,8 @@ module.exports = function (config) {
                 : db.delFromKeyByScore(key, Number(req.query.value));
 
             stream
+                .errors(logStreamExceptions(req))
+                .stopOnError(next)
                 .done(() => {
                     res.writeHead(204);
                     res.end();

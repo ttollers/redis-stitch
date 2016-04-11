@@ -26,7 +26,7 @@ module.exports = function(config) {
 
     server = restify.createServer();
 
-    server.use(morgan(':date[iso] - info: method=:method, url=:url, status=:status, response-time=:response-time'));
+    server.use(morgan(':date[iso] - info: endpoint method=:method, url=:url, status=:status, response-time=:response-time'));
 
     server.use(function crossOrigin(req, res, next) {
         res.header("Access-Control-Allow-Origin", "*");
