@@ -48,7 +48,6 @@ module.exports = function (config) {
             const score = req.query.score && parseInt(req.query.score);
             hl(req)
                 .tap(logOutput("endpoint", "incoming", req))
-                .reduce('', R.add)
                 .flatMap(value => {
                     if (R.isNil(score)) {
                         return db.setKey(key, value);
