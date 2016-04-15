@@ -48,6 +48,7 @@ module.exports = function (config) {
             const score = req.query.score && parseInt(req.query.score);
             hl(req)
                 .tap(logOutput("endpoint", "incoming", req))
+                .invoke('toString', ['utf8'])
                 .reduce1(R.concat)
                 .flatMap(value => {
                     if (R.isNil(score)) {
