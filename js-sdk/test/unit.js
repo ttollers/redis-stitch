@@ -5,6 +5,7 @@ var chai = require('chai');
 var assert = chai.assert;
 var R = require('ramda');
 var hl = require('highland');
+var sinon = require('sinon');
 
 var assertEquals = function (obj1) {
     return function (obj2) {
@@ -12,7 +13,27 @@ var assertEquals = function (obj1) {
     }
 };
 
+
+const stubStdout = () => {
+    var origStdoutWrite = process.stdout.write;
+    var logFilterPattern = /(info\:)|(ResourceNotFoundError)/;
+
+    //filter log output
+    sinon.stub(process.stdout, 'write', function() {
+        var args = Array.prototype.slice.call(arguments);
+        if (!logFilterPattern.test(args[0])) {
+            return origStdoutWrite.apply(process.stdout, args);
+        }
+    });
+};
+
+const restoreStdout = () => process.stdout.write.restore.bind();
+
 describe('unit tests', () => {
+
+    before(stubStdout);
+    after(restoreStdout);
+
     describe('sdk', () => {
         var presentationService = require('../sdk');
         var ps = presentationService();
