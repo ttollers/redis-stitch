@@ -2,7 +2,6 @@
 
 var rewire = require('rewire');
 var chai = require('chai');
-var assert = chai.assert;
 var restify = require('restify');
 var sinon = require('sinon');
 var hl = require('highland');

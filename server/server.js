@@ -2,7 +2,9 @@
 
 var server;
 
-module.exports = function(config) {
+module.exports = function (config) {
+    var redis = require("redis");
+
     var R = require('ramda');
     var restify = require('restify');
     var logger = require('winston').loggers.get('elasticsearch');
@@ -14,8 +16,10 @@ module.exports = function(config) {
         return APIname.toUpperCase() === 'DEL' ? 'DELETE' : APIname.toUpperCase();
     }
 
+    var redisClient = require('./lib/db')(config);
+
     function useAPI(prefix, server) {
-        var api = require('./lib/' + prefix)(config);
+        var api = require('./lib/' + prefix)(config, redisClient);
         for (var method in api) {
             if (api.hasOwnProperty(method) && R.contains(translateAPIMethodName(method), config.allowedMethods)) {
                 server[method](new RegExp('\/' + prefix + '\/.+'), api[method]);
@@ -25,7 +29,6 @@ module.exports = function(config) {
     }
 
     server = restify.createServer();
-
     server.use(morgan(':date[iso] - info: endpoint method=:method, url=:url, status=:status, response-time=:response-time'));
 
     server.use(function crossOrigin(req, res, next) {
@@ -51,9 +54,10 @@ module.exports = function(config) {
             server_url: server.url
         });
     });
+
 };
 
 
-if(require.main === module) {
+if (require.main === module) {
     module.exports(require('config'));
 }
