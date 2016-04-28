@@ -249,36 +249,27 @@ describe('hydrateKey', () => {
             })
     });
 
-    //describe("Edge case when string is added to database inbetween getMultiple and listKey", () => {
-    //    var sinon = require("sinon");
-    //    var edgeV1 = rewire('../lib/v1');
-    //    var edgeHydrateString = edgeV1.__get__("hydrateString");
-    //
-    //    edgeV1.__set__("db", {
-    //        "getMultiple": sinon.stub(),
-    //        "listKey": sinon.stub()
-    //    });
-    //
-    //    edgeV1.__set__("db", {
-    //        "getMultiple": sinon.stub(),
-    //        "listKey": sinon.stub()
-    //    });
-    //    var edgeDb = edgeV1.__get__("db");
-    //
-    //    edgeDb.getMultiple.onCall(0).returns(hl([[null]]));
-    //    edgeDb.getMultiple.onCall(1).returns(hl([["data"]]));
-    //
-    //    var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
-    //    e.code = 'WRONGTYPE';
-    //
-    //    edgeDb.listKey.returns(hl((push) => push(e)));
-    //
-    //    it("should loop back if get a wrongType error", (done) => {
-    //        edgeHydrateString({}, "${key}")
-    //            .pull((err, res) => {
-    //                assert.equal(res, "data");
-    //                done(err);
-    //            });
-    //    })
-    //});
+    describe("Edge case when string is added to database inbetween getMultiple and listKey", () => {
+        var sinon = require("sinon");
+        var edgeDb = require("../lib/db");
+
+        edgeDb.getMultiple = sinon.stub();
+        edgeDb.listKey = sinon.stub();
+
+        edgeDb.getMultiple.onCall(0).returns(hl([[null]]));
+        edgeDb.getMultiple.onCall(1).returns(hl([["data"]]));
+
+        var e = new Error('WRONGTYPE Operation against a key holding the wrong kind of value');
+        e.code = 'WRONGTYPE';
+
+        edgeDb.listKey.returns(hl((push) => push(e)));
+
+        it("should loop back if get a wrongType error", (done) => {
+            hydrateKey(edgeDb, {}, "${key}")
+                .pull((err, res) => {
+                    assert.equal(res, "data");
+                    done(err);
+                });
+        })
+    });
 });
