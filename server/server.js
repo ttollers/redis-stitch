@@ -3,8 +3,6 @@
 var server;
 
 module.exports = function (config) {
-    var redis = require("redis");
-
     var R = require('ramda');
     var restify = require('restify');
     var logger = require('winston').loggers.get('elasticsearch');
