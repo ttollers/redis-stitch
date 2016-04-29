@@ -1,8 +1,6 @@
 "use strict";
 
 var rewire = require('rewire');
-var chai = require('chai');
-var restify = require('restify');
 var sinon = require('sinon');
 var hl = require('highland');
 var logger = require('winston').loggers.get('elasticsearch');
