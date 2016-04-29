@@ -4,7 +4,6 @@ var rewire = require('rewire');
 var chai = require('chai');
 var assert = chai.assert;
 var hl = require('highland');
-var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
@@ -16,11 +15,8 @@ var config = {
 };
 
 var db = require("../lib/db")(config);
-
-var v1Module = require('../lib/v1');
-var v1 = v1Module(config, db);
-var hydrateKey = require('../lib/hydrateString');
-
+var hydrateString = require('../lib/hydrateString');
+var hydrateKey = hydrateString(db)
 function deleteAndSetDb(type, values) {
     return db.delKey(values[0])
         .flatMap(db[type].apply(db, values));
@@ -30,7 +26,7 @@ describe('hydrateKey', () => {
 
     it('should pluck values which are plain string', (done) => {
         deleteAndSetDb("setKey", ["key", "value"])
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'value'))
             .pull(done)
     });
@@ -38,7 +34,7 @@ describe('hydrateKey', () => {
     it('should pluck values which are list values', (done) => {
         deleteAndSetDb("addToKey", ["key", 0, "value1"])
             .flatMap(db.addToKey("key", 1, "value2"))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, '[value1,value2]'))
             .pull(done)
     });
@@ -48,14 +44,14 @@ describe('hydrateKey', () => {
             .flatMap(deleteAndSetDb("setKey", ["value", "${duplicate}"]))
             .flatMap(deleteAndSetDb("setKey", ["duplicate", "duplicates"]))
 
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'duplicates, duplicates'))
             .pull(done);
     });
 
     it('should error when there is no data', (done) => {
         db.delKey("key")
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
                 assert.ok(err, 'there is an error');
@@ -68,7 +64,7 @@ describe('hydrateKey', () => {
     it('should hydrate values which contain ${ref}', (done) => {
         deleteAndSetDb("setKey", ["key", "hello ${area}"])
             .flatMap(db.setKey("area", "world"))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'hello world'))
             .pull(done)
     });
@@ -76,7 +72,7 @@ describe('hydrateKey', () => {
     it('should return the default value from ${ref|def} if ref doesn\'t exist', (done) => {
         deleteAndSetDb("setKey", ["key", "hello ${area;nothing}"])
             .flatMap(db.delKey("area"))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'hello nothing'))
             .pull(done)
     });
@@ -84,7 +80,7 @@ describe('hydrateKey', () => {
     it('should return the default value from ${ref|def} if ref doesn\'t exist even if this is the string "null"', (done) => {
         deleteAndSetDb("setKey", ["key", "hello ${area;null}"])
             .flatMap(db.delKey("area"))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'hello null'))
             .pull(done)
     });
@@ -93,7 +89,7 @@ describe('hydrateKey', () => {
         deleteAndSetDb("setKey", ["key", "welcome to ${area}"])
             .flatMap(db.setKey("area", "my ${place}"))
             .flatMap(db.setKey("place", "world"))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'welcome to my world'))
             .pull(done)
     });
@@ -110,7 +106,7 @@ describe('hydrateKey', () => {
 
         hl(streams)
             .merge()
-            .flatMap(hydrateKey(db, {}, '${long-list}'))
+            .flatMap(hydrateKey({}, '${long-list}'))
             .tap(value => assert.equal(value, expected.substring(0, expected.length - 1) + "]"))
             .pull(done)
     });
@@ -139,7 +135,7 @@ describe('hydrateKey', () => {
 
         describe("runs the test", () => {
             it("runs hydrateKey", done => {
-                hydrateKey(db, {}, '${live-centre-list}')
+                hydrateKey({}, '${live-centre-list}')
                     .tap(value => assert.equal(value, expected.substring(0, expected.length - 1) + "]"))
                     .pull(done)
             });
@@ -170,7 +166,7 @@ describe('hydrateKey', () => {
 
         describe("runs the test", () => {
             it("runs hydrateKey", done => {
-                hydrateKey(db, {}, '${list}')
+                hydrateKey({}, '${list}')
                 //.tap(console.log)
                     .pull(done)
             });
@@ -180,7 +176,7 @@ describe('hydrateKey', () => {
     it('should hydrate part containing ${ref,prop,subprop}', (done) => {
         deleteAndSetDb("setKey", ["key", "step 1: ${steps,one}, step 2: ${steps,two,three}, step 3: Profit"])
             .flatMap(deleteAndSetDb("setKey", ["steps", '{"one": "write a fan-fiction", "two": { "three": "make movie of it"} }']))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'step 1: write a fan-fiction, step 2: make movie of it, step 3: Profit'))
             .pull(done)
     });
@@ -188,7 +184,7 @@ describe('hydrateKey', () => {
     it('should error if a prop doesn\'t exist', (done) => {
         deleteAndSetDb("setKey", ["key", "welcome to ${area,one}"])
             .flatMap(deleteAndSetDb("setKey", ["area", "{}"]))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
                 assert.ok(err, 'there is an error');
@@ -203,7 +199,7 @@ describe('hydrateKey', () => {
             .flatMap(deleteAndSetDb("setKey", ["area", "world"]))
             .flatMap(deleteAndSetDb("setKey", ["compliment", "great"]))
             .flatMap(deleteAndSetDb("setKey", ["timePeriod", "day"]))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'hello world, it is such a great day'))
             .pull(done)
     });
@@ -211,14 +207,14 @@ describe('hydrateKey', () => {
     it('CRON-280 should no longer happen', (done) => {
         deleteAndSetDb("setKey", ["key", "${foo;null}"])
             .flatMap(deleteAndSetDb("setKey", ["foo", '{"man": "${bar,a;}", "choo": "${bar,b;}" }']))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.deepEqual(JSON.parse(value), {man: '', choo: ''}))
             .pull(done)
     });
 
     it("should not error if a dollar sign is used in articles", (done) => {
         deleteAndSetDb("setKey", ["key", "this is some text which has a $sign in it like when talking about $100 bills n stuff"])
-            .flatMap(hydrateKey(db, {}, "${key}"))
+            .flatMap(hydrateKey({}, "${key}"))
             .map(value => assert.equal(value, "this is some text which has a $sign in it like when talking about $100 bills n stuff"))
             .pull(done);
     });
@@ -226,7 +222,7 @@ describe('hydrateKey', () => {
     it('should error when there is cycle', (done) => {
 
         deleteAndSetDb("setKey", ["key", "${key}"])
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
                 assert.ok(err, 'there is an error');
@@ -239,7 +235,7 @@ describe('hydrateKey', () => {
     it('should error on nested cycles', (done) => {
         deleteAndSetDb("setKey", ["key", "${value}"])
             .flatMap(deleteAndSetDb("setKey", ["value", "${key}"]))
-            .flatMap(hydrateKey(db, {}, '${key}'))
+            .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
                 assert.ok(err, 'there is an error');
@@ -263,9 +259,10 @@ describe('hydrateKey', () => {
         e.code = 'WRONGTYPE';
 
         edgeDb.listKey.returns(hl((push) => push(e)));
+        var edgeHydrateString = hydrateString(edgeDb);
 
         it("should loop back if get a wrongType error", (done) => {
-            hydrateKey(edgeDb, {}, "${key}")
+            edgeHydrateString({}, "${key}")
                 .pull((err, res) => {
                     assert.equal(res, "data");
                     done(err);

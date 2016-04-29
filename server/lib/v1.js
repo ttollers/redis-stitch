@@ -29,7 +29,7 @@ var logStreamExceptions = R.curry((req, err, push) => {
     push(err, null);
 });
 
-module.exports = function (config, db) {
+module.exports = function (db, config) {
     return {
         get(req, res, next) {
             const key = decodeURIComponent(req.path());

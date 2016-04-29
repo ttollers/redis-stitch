@@ -4,7 +4,7 @@ var hl = require("highland");
 var R = require("ramda");
 var restify = require("restify");
 
-function hydrateString(db, local, string) {
+var hydrateString = R.curry((db, local, string) => {
     const splits = R.flatten(splitStringByRef(string)
         .map(createReferenceObject(local, 0)));
 
@@ -53,7 +53,7 @@ function hydrateString(db, local, string) {
         .flatMap(function (x) {
             return hydrateString(db, local, x.join(""));
         });
-}
+});
 
 // if the reference contained "props" (i.e. ${ref,prop1,prop2} fill these values
 function hydrateProps(obj) {
