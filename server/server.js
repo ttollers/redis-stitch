@@ -17,7 +17,7 @@ module.exports = function (config) {
     var redisClient = require('./lib/db')(config);
 
     function useAPI(prefix, server) {
-        var api = require('./lib/' + prefix)(redisClient, redisClient);
+        var api = require('./lib/' + prefix)(redisClient);
         for (var method in api) {
             if (api.hasOwnProperty(method) && R.contains(translateAPIMethodName(method), config.allowedMethods)) {
                 server[method](new RegExp('\/' + prefix + '\/.+'), api[method]);
