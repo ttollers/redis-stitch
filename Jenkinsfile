@@ -21,7 +21,7 @@ node("docker-slave-n") {
     stage "Checkout Presentation Service"
         checkout scm
     stage "Presentation Service Tests"
-        //runTests()
+        runTests()
 
     stage "Check that version has changed"
         sh '''#!/bin/bash -l
