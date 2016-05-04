@@ -1,4 +1,3 @@
-
 def runTests() {
     sh '''#!/bin/bash -l
     n 4.2.6
