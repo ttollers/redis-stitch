@@ -25,11 +25,7 @@ node("docker-slave-n") {
 
     stage "Check that version has changed"
         sh '''#!/bin/bash -l
-           PACKAGE_VERSION=$(cat server/package.json \
-             | grep version \
-             | head -1 \
-             | awk -F: '{ print $2 }' \
-             | sed 's/[" ,]//g')
+           PACKAGE_VERSION=$(cat ./server/package.json | jq ".version")
            echo "CURRENT_VERSION=\${PACKAGE_VERSION}" > ./launcher.properties
         '''
 
@@ -95,13 +91,7 @@ node("docker-slave-n") {
     stage "Docker: Build"
 
         sh '''#!/bin/bash -l
-           PACKAGE_VERSION=$(cat server/package.json \
-             | grep version \
-             | head -1 \
-             | awk -F: '{ print $2 }' \
-             | sed 's/[" ,]//g')
-
-           echo "PACKAGE_VERSION=\${PACKAGE_VERSION}" > ./launcher.properties
+           source ./launcher.properties
            cd server
            docker build -t trinitymirror/presentation-service:"$PACKAGE_VERSION" .
         '''
@@ -109,7 +99,6 @@ node("docker-slave-n") {
     stage "Docker: Push"
         sh '''#!/bin/bash -l
             source ./launcher.properties
-            echo $PACKAGE_VERSION
             cd server
             docker push trinitymirror/presentation-service:"$PACKAGE_VERSION"
         '''
