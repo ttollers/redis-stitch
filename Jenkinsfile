@@ -25,7 +25,7 @@ node("docker-slave-n") {
 
     stage "Check that version has changed"
         sh '''#!/bin/bash -l
-           PACKAGE_VERSION=$(cat ./server/package.json | jq ".version")
+           PACKAGE_VERSION=$(cat ./server/package.json | jq .version)
            echo "CURRENT_VERSION=\${PACKAGE_VERSION}" > ./launcher.properties
         '''
 
