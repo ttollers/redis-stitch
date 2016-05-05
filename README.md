@@ -68,4 +68,4 @@ All parameters are optional.
  update the presentation version in /live-centre/live-centre-launcher/config/default.json
  deploy the live-centre env bitbucket trigger
 
- All these steps are now done automatically by Jenkins
+ All these steps are now done automatically by Jenkinss
