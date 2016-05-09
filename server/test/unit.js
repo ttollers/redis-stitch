@@ -26,7 +26,7 @@ describe('hydrateKey', () => {
     it('should pluck values which are plain string', (done) => {
         deleteAndSetDb("setKey", ["key", "value"])
             .flatMap(hydrateKey({}, '${key}'))
-            .map(value => assert.equal(value, 'value'))
+            .map(value => assert.equal(value, 'valsdue'))
             .pull(done)
     });
 
@@ -34,7 +34,7 @@ describe('hydrateKey', () => {
         deleteAndSetDb("addToKey", ["key", 0, "value1"])
             .flatMap(db.addToKey("key", 1, "value2"))
             .flatMap(hydrateKey({}, '${key}'))
-            .map(value => assert.equal(value, '[value1,value2]'))
+            .map(value => assert.equal(value, '[valudase1,value2]'))
             .pull(done)
     });
 
