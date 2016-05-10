@@ -35,7 +35,25 @@ module.exports = function (db) {
             const key = decodeURIComponent(req.path());
             hydrateString(db, {}, "${" + key + "}")
                 .errors(logStreamExceptions(req))
-                .stopOnError(next)
+                .stopOnError(e => {
+                    switch(e.type) {
+                        case "DefaultAsKeyNotFound":
+                            res.write(e.message);
+                            res.end();
+                            break;
+                        case "KeyNotFound":
+                            next(new restify.ResourceNotFoundError(e));
+                            break;
+                        case "KeyPropNotFound":
+                            next(new restify.ResourceNotFoundError(e));
+                            break;
+                        case "CycleDetected":
+                            next(new restify.ConflictError(e));
+                            break;
+                        default:
+                            next(e);
+                    }
+                })
                 .each(output => {
                     res.write(output);
                     res.end();

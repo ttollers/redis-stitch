@@ -69,6 +69,16 @@ describe('v1 api', () => {
                 })
         });
 
+        it('should not 404 when a default value is given', (done) => {
+            set('/v1/hello/world/defaults', "redundant string ${non_existent_ref}")
+                .pull(() => {
+                    request
+                        .get('/v1/hello/world/defaults;null')
+                        .expect(200, "null")
+                        .end(done);
+                })
+        });
+
         it('should get string data saved in redis', (done) => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
