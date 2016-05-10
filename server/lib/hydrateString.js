@@ -2,13 +2,16 @@
 
 var hl = require("highland");
 var R = require("ramda");
-var restify = require("restify");
 
 var hydrateString = R.curry((db, local, string) => {
     const splits = R.flatten(splitStringByRef(string)
         .map(createReferenceObject(local, 0)));
 
     const refs = splits.filter(R.is(Object));
+
+    if (R.isEmpty(local)) {
+        local.globalDefault = refs[0].def;
+    }
 
     if (refs.length === 0) return hl([splits.join("")]);
 
@@ -25,9 +28,18 @@ var hydrateString = R.curry((db, local, string) => {
                             }
                             else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
-                                else {
-                                    push(null, R.assoc("value", null, obj));
+                                else if (!R.isNil(local.globalDefault)) {
+                                    push({
+                                        "default": local.globalDefault
+                                    })
                                 }
+                                else {
+                                    push({
+                                        "statusCode": 404,
+                                        "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
+                                    });
+                                }
+
                             }
                             else push(null, R.assoc("value", '[' + list.toString() + ']', obj));
                             push(null, hl.nil);
@@ -41,13 +53,10 @@ var hydrateString = R.curry((db, local, string) => {
         .map(hydrateProps)
         // if the value doesnt exist, throw. Otherwise make sure is stringified
         .map(obj => {
-            if (R.isNil(obj.value)) throw new restify.ResourceNotFoundError([obj.key].concat(obj.props).reverse().join(' of ') + ' not available');
-            else {
-                const value = R.is(String, obj.value) ? obj.value : JSON.stringify(obj.value);
-                if (obj.key === value) return "${" + value + "}";
-                local[obj.key] = value;
-                return value;
-            }
+            const value = R.is(String, obj.value) ? obj.value : JSON.stringify(obj.value);
+            if (obj.key === value) return "${" + value + "}";
+            local[obj.key] = value;
+            return value;
         })
         .reduce(splits, populateArrayWithValues)
         .flatMap(function (x) {
@@ -58,12 +67,17 @@ var hydrateString = R.curry((db, local, string) => {
 // if the reference contained "props" (i.e. ${ref,prop1,prop2} fill these values
 function hydrateProps(obj) {
     if (obj.props.length) {
-        try {
-            return R.assoc("value", R.path(obj.props, JSON.parse(obj.value)), obj);
-        } catch (e) {
-            return obj;
+        const getJsonValue = x => R.path(obj.props, JSON.parse(x));
+        var value = R.tryCatch(getJsonValue, () => obj.value)(obj.value);
+        if(R.isNil(value)) {
+            throw {
+                "statusCode": 404,
+                "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
+            }
         }
-    } else {
+        else return R.assoc("value", value, obj);
+    }
+    else {
         return obj;
     }
 }
@@ -86,17 +100,15 @@ const createReferenceObject = R.curry((local, i, x) => {
 // check that the value hasn't already been used in the hydration process
 const checkLocalStorage = R.curry((local, i, obj) => {
     if (i > 25) {
-        throw new restify.InternalServerError('cycle detected');
+        throw {
+            "statusCode": 500,
+            "message": "Cycle Detected"
+        }
     }
     else if (R.has(obj.key, local)) {
         // recursive function
         return splitStringByRef(local[obj.key])
             .map(createReferenceObject(local, i + 1));
-    }
-    else if (local[obj.key] === {}) {
-        // if the key has ben tested previously and doesn't exist don't test again
-        if (R.isNil(obj.def)) throw new restify.ResourceNotFoundError(obj.key + ' not available');
-        return obj.def;
     }
     else {
         return obj;

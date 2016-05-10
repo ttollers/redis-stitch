@@ -35,7 +35,16 @@ module.exports = function (db) {
             const key = decodeURIComponent(req.path());
             hydrateString(db, {}, "${" + key + "}")
                 .errors(logStreamExceptions(req))
-                .stopOnError(next)
+                .stopOnError(e => {
+                    if(!R.isNil(e.default)) {
+                        res.write(e.default);
+                        res.end();
+                    } else if(e.statusCode === 404) {
+                        next(new restify.ResourceNotFoundError(e.message))
+                    } else {
+                        next(e)
+                    }
+                })
                 .each(output => {
                     res.write(output);
                     res.end();

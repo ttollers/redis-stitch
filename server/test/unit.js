@@ -51,10 +51,8 @@ describe('hydrateKey', () => {
     it('should error when there is no data', (done) => {
         db.delKey("key")
             .flatMap(hydrateKey({}, '${key}'))
-            .pull((err, data) => {
-                assert.notOk(data);
-                assert.ok(err, 'there is an error');
-                assert.ok(err.body, err);
+            .pull((err) => {
+                assert.equal(err.message, "key not available");
                 assert.equal(err.statusCode, 404, 'it is a 404');
                 done()
             })
@@ -82,6 +80,16 @@ describe('hydrateKey', () => {
             .flatMap(hydrateKey({}, '${key}'))
             .map(value => assert.equal(value, 'hello null'))
             .pull(done)
+    });
+
+    it('should handle nested default values correctly', (done) => {
+        deleteAndSetDb("setKey", ["key", "asdf ${not_here}"])
+            .flatMap(db.delKey("area"))
+            .flatMap(hydrateKey({}, '${key;null}'))
+            .pull((err, res) => {
+                assert.equal(err.default, "null");
+                done();
+            })
     });
 
     it('should deep hydrate values which contain ${ref}', (done) => {
@@ -185,9 +193,7 @@ describe('hydrateKey', () => {
             .flatMap(deleteAndSetDb("setKey", ["area", "{}"]))
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
-                assert.notOk(data);
-                assert.ok(err, 'there is an error');
-                assert.ok(err.body, err);
+                assert.equal(err.message, "one of area not available");
                 assert.equal(err.statusCode, 404, 'it is a 404');
                 done()
             })
@@ -223,9 +229,7 @@ describe('hydrateKey', () => {
         deleteAndSetDb("setKey", ["key", "${key}"])
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
-                assert.notOk(data);
-                assert.ok(err, 'there is an error');
-                assert.ok(err.body, 'it is a HttpError');
+                assert.equal(err.message, 'Cycle Detected');
                 assert.notEqual(err.statusCode, 200, 'it is an error');
                 done()
             })
@@ -237,9 +241,8 @@ describe('hydrateKey', () => {
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
-                assert.ok(err, 'there is an error');
-                assert.ok(err.body, 'it is a HttpError');
-                assert.notEqual(err.statusCode, 200, 'it is an error');
+                assert.equal(err.message, 'Cycle Detected');
+                assert.notEqual(err.statusCode, 200, 'it is a error');
                 done()
             })
     });
