@@ -24,8 +24,8 @@ node("docker-slave-n") {
 
     stage "Check that version has changed"
         sh '''#!/bin/bash -l
-           PACKAGE_VERSION=$(cat ./server/package.json | jq -r ".version")
-           echo "CURRENT_VERSION=\${PACKAGE_VERSION}" > ./launcher.properties
+           NEW_VERSION=$(cat ./server/package.json | jq -r ".version")
+           echo "NEW_VERSION=\${NEW_VERSION}" > ./launcher.properties
         '''
 
         sh '''#!/bin/bash -l
@@ -68,7 +68,7 @@ node("docker-slave-n") {
             }
             set -a
             source ./launcher.properties
-            vercomp $LATEST_VERSION $CURRENT_VERSION
+            vercomp $LATEST_VERSION $NEW_VERSION
             case $? in
                 0) op='0';;
                 1) op='1';;
@@ -92,14 +92,14 @@ node("docker-slave-n") {
         sh '''#!/bin/bash -l
            source ./launcher.properties
            cd server
-           docker build -t trinitymirror/presentation-service:"$PACKAGE_VERSION" .
+           docker build -t trinitymirror/presentation-service:"$NEW_VERSION" .
         '''
 
     stage "Docker: Push"
         sh '''#!/bin/bash -l
             source ./launcher.properties
             cd server
-            docker push trinitymirror/presentation-service:"$PACKAGE_VERSION"
+            docker push trinitymirror/presentation-service:"$NEW_VERSION"
         '''
 
     stage "Publish to NPM"
