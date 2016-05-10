@@ -87,7 +87,7 @@ describe('hydrateKey', () => {
             .flatMap(db.delKey("area"))
             .flatMap(hydrateKey({}, '${key;null}'))
             .pull((err, res) => {
-                assert.equal(err.default, "null");
+                assert.equal(err, "null");
                 done();
             })
     });

@@ -36,13 +36,13 @@ module.exports = function (db) {
             hydrateString(db, {}, "${" + key + "}")
                 .errors(logStreamExceptions(req))
                 .stopOnError(e => {
-                    if(!R.isNil(e.default)) {
-                        res.write(e.default);
+                    if(R.is(String, e)) {
+                        res.write(e);
                         res.end();
-                    } else if(e.statusCode === 404) {
-                        next(new restify.ResourceNotFoundError(e.message))
+                    } else if(R.has("statusCode", e)) {
+                        res.send(e.statusCode, e);
                     } else {
-                        next(e)
+                        next(e);
                     }
                 })
                 .each(output => {

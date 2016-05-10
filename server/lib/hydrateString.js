@@ -29,9 +29,7 @@ var hydrateString = R.curry((db, local, string) => {
                             else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
                                 else if (!R.isNil(local.globalDefault)) {
-                                    push({
-                                        "default": local.globalDefault
-                                    })
+                                    push(local.globalDefault)
                                 }
                                 else {
                                     push({
@@ -39,7 +37,6 @@ var hydrateString = R.curry((db, local, string) => {
                                         "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
                                     });
                                 }
-
                             }
                             else push(null, R.assoc("value", '[' + list.toString() + ']', obj));
                             push(null, hl.nil);
@@ -51,7 +48,6 @@ var hydrateString = R.curry((db, local, string) => {
         })
         .sequence()
         .map(hydrateProps)
-        // if the value doesnt exist, throw. Otherwise make sure is stringified
         .map(obj => {
             const value = R.is(String, obj.value) ? obj.value : JSON.stringify(obj.value);
             if (obj.key === value) return "${" + value + "}";
