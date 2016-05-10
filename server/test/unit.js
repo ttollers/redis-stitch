@@ -1,10 +1,8 @@
 "use strict";
 
 var rewire = require('rewire');
-var chai = require('chai');
-var assert = chai.assert;
+var assert = require('chai').assert;
 var hl = require('highland');
-var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
@@ -15,10 +13,9 @@ var config = {
     "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
 };
 
-var v1Module = rewire('../lib/v1');
-var v1 = v1Module(config);
-var db = v1Module.__get__("db");
-
+var db = require("../lib/db")(config);
+var hydrateString = require('../lib/hydrateString');
+var hydrateKey = hydrateString(db)
 function deleteAndSetDb(type, values) {
     return db.delKey(values[0])
         .flatMap(db[type].apply(db, values));
@@ -26,7 +23,6 @@ function deleteAndSetDb(type, values) {
 
 describe('hydrateKey', () => {
 
-    var hydrateKey = v1Module.__get__('hydrateString');
     it('should pluck values which are plain string', (done) => {
         deleteAndSetDb("setKey", ["key", "value"])
             .flatMap(hydrateKey({}, '${key}'))
@@ -250,19 +246,10 @@ describe('hydrateKey', () => {
 
     describe("Edge case when string is added to database inbetween getMultiple and listKey", () => {
         var sinon = require("sinon");
-        var edgeV1 = rewire('../lib/v1');
-        var edgeHydrateString = edgeV1.__get__("hydrateString");
+        var edgeDb = require("../lib/db");
 
-        edgeV1.__set__("db", {
-            "getMultiple": sinon.stub(),
-            "listKey": sinon.stub()
-        });
-
-        edgeV1.__set__("db", {
-            "getMultiple": sinon.stub(),
-            "listKey": sinon.stub()
-        });
-        var edgeDb = edgeV1.__get__("db");
+        edgeDb.getMultiple = sinon.stub();
+        edgeDb.listKey = sinon.stub();
 
         edgeDb.getMultiple.onCall(0).returns(hl([[null]]));
         edgeDb.getMultiple.onCall(1).returns(hl([["data"]]));
@@ -271,6 +258,7 @@ describe('hydrateKey', () => {
         e.code = 'WRONGTYPE';
 
         edgeDb.listKey.returns(hl((push) => push(e)));
+        var edgeHydrateString = hydrateString(edgeDb);
 
         it("should loop back if get a wrongType error", (done) => {
             edgeHydrateString({}, "${key}")
