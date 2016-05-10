@@ -29,7 +29,7 @@ var hydrateString = R.curry((db, local, string) => {
                             else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
                                 else if (!R.isNil(local.globalDefault)) {
-                                    push(local.globalDefault)
+                                    push(local.globalDefault);
                                 }
                                 else {
                                     push({
@@ -69,7 +69,7 @@ function hydrateProps(obj) {
             throw {
                 "statusCode": 404,
                 "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
-            }
+            };
         }
         else return R.assoc("value", value, obj);
     }
@@ -99,7 +99,7 @@ const checkLocalStorage = R.curry((local, i, obj) => {
         throw {
             "statusCode": 500,
             "message": "Cycle Detected"
-        }
+        };
     }
     else if (R.has(obj.key, local)) {
         // recursive function
