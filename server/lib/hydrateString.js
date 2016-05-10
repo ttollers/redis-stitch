@@ -29,12 +29,15 @@ var hydrateString = R.curry((db, local, string) => {
                             else if (R.isEmpty(list)) {
                                 if (!R.isNil(obj.def)) push(null, R.assoc("value", obj.def, obj));
                                 else if (!R.isNil(local.globalDefault)) {
-                                    push(local.globalDefault);
+                                    push({
+                                        "type": "DefaultAsKeyNotFound",
+                                        "message": local.globalDefault
+                                    });
                                 }
                                 else {
                                     push({
-                                        "statusCode": 404,
-                                        "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
+                                        "type": "KeyNotFound",
+                                        "message": obj.key + ' not available'
                                     });
                                 }
                             }
@@ -67,7 +70,7 @@ function hydrateProps(obj) {
         var value = R.tryCatch(getJsonValue, () => obj.value)(obj.value);
         if(R.isNil(value)) {
             throw {
-                "statusCode": 404,
+                "type": "KeyPropNotFound",
                 "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
             };
         }
@@ -97,8 +100,8 @@ const createReferenceObject = R.curry((local, i, x) => {
 const checkLocalStorage = R.curry((local, i, obj) => {
     if (i > 25) {
         throw {
-            "statusCode": 500,
-            "message": "Cycle Detected"
+            "type": "CycleDetected",
+            "message": "Cycle Detected in " + obj.key
         };
     }
     else if (R.has(obj.key, local)) {

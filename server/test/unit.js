@@ -53,7 +53,7 @@ describe('hydrateKey', () => {
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err) => {
                 assert.equal(err.message, "key not available");
-                assert.equal(err.statusCode, 404, 'it is a 404');
+                assert.equal(err.type, "KeyNotFound", 'it is a 404');
                 done()
             })
     });
@@ -87,7 +87,8 @@ describe('hydrateKey', () => {
             .flatMap(db.delKey("area"))
             .flatMap(hydrateKey({}, '${key;null}'))
             .pull((err, res) => {
-                assert.equal(err, "null");
+                assert.equal(err.type, "DefaultAsKeyNotFound");
+                assert.equal(err.message, "null");
                 done();
             })
     });
@@ -194,7 +195,7 @@ describe('hydrateKey', () => {
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.equal(err.message, "one of area not available");
-                assert.equal(err.statusCode, 404, 'it is a 404');
+                assert.equal(err.type, "KeyPropNotFound", 'it is a 404');
                 done()
             })
     });
@@ -229,8 +230,8 @@ describe('hydrateKey', () => {
         deleteAndSetDb("setKey", ["key", "${key}"])
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
-                assert.equal(err.message, 'Cycle Detected');
-                assert.notEqual(err.statusCode, 200, 'it is an error');
+                assert.equal(err.message, 'Cycle Detected in key');
+                assert.equal(err.type, "CycleDetected", 'it is an error');
                 done()
             })
     });
@@ -241,8 +242,8 @@ describe('hydrateKey', () => {
             .flatMap(hydrateKey({}, '${key}'))
             .pull((err, data) => {
                 assert.notOk(data);
-                assert.equal(err.message, 'Cycle Detected');
-                assert.notEqual(err.statusCode, 200, 'it is a error');
+                assert.equal(err.message, 'Cycle Detected in key');
+                assert.equal(err.type, "CycleDetected", 'it is an error');
                 done()
             })
     });

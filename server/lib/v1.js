@@ -36,13 +36,22 @@ module.exports = function (db) {
             hydrateString(db, {}, "${" + key + "}")
                 .errors(logStreamExceptions(req))
                 .stopOnError(e => {
-                    if(R.is(String, e)) {
-                        res.write(e);
-                        res.end();
-                    } else if(R.has("statusCode", e)) {
-                        res.send(e.statusCode, e);
-                    } else {
-                        next(e);
+                    switch(e.type) {
+                        case "DefaultAsKeyNotFound":
+                            res.write(e.message);
+                            res.end();
+                            break;
+                        case "KeyNotFound":
+                            next(new restify.ResourceNotFoundError(e));
+                            break;
+                        case "KeyPropNotFound":
+                            next(new restify.ResourceNotFoundError(e));
+                            break;
+                        case "CycleDetected":
+                            next(new restify.ConflictError(e));
+                            break;
+                        default:
+                            next(e);
                     }
                 })
                 .each(output => {
