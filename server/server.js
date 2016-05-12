@@ -14,7 +14,7 @@ module.exports = function (config) {
         return APIname.toUpperCase() === 'DEL' ? 'DELETE' : APIname.toUpperCase();
     }
 
-    var db = require("ps-direct-sdk")(config);
+    var db = require("ps-direct-sdk")(config.redis);
 
     function useAPI(prefix, server) {
         var api = require('./lib/' + prefix)(db);

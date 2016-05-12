@@ -51,8 +51,8 @@ function initRealRedis(config) {
     var redis = require('redis');
     hl.streamifyAll(redis.RedisClient.prototype);
     hl.streamifyAll(redis.Multi.prototype);
-    const PORT = config.redis.port;
-    const HOST = config.redis.host;
+    const PORT = config.port;
+    const HOST = config.host;
     logger.verbose('connected to redis at %s:%s', HOST, PORT, {});
     return redis.createClient(PORT, HOST);
 }
