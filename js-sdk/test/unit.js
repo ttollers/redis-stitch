@@ -206,7 +206,6 @@ describe('unit tests', () => {
 
         it('rejects non-string values passed to put', (done) => {
             ps.put('/v1/NonStringPutTest', {'data': 'data'})
-                .tap(console.log)
                 .pull((err, res) => {
                     assert.ok(err);
                     done();
