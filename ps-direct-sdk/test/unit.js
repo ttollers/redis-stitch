@@ -2,7 +2,11 @@
 
 var assert = require("chai").assert;
 var presentationService = require('../index');
-var ps = presentationService();
+var config = process.env.USE_REDIS === 'true' ? {
+    "host": "127.0.0.1",
+    "port": 6379
+} : void 0;
+var ps = presentationService(config);
 var chai = require('chai');
 var R = require('ramda');
 var hl = require('highland');

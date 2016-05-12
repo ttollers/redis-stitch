@@ -4,7 +4,6 @@ var hl = require('highland');
 var logger = require('winston');
 var R = require("ramda");
 
-
 module.exports = function (config) {
     var client = R.isNil(config) ? initFakeRedis() : initRealRedis(config);
     logger.verbose('Initialised connection to database');

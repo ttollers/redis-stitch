@@ -7,9 +7,9 @@ var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
 var config = process.env.USE_REDIS === 'true' ? {
-        "host": "127.0.0.1",
-        "port": 6379
-    } : void 0;
+    "host": "127.0.0.1",
+    "port": 6379
+} : void 0;
 
 var db = require("../db")(config);
 var hydrateString = require('../lib/hydrateString');
