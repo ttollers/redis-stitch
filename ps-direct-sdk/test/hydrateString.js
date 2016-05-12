@@ -173,7 +173,6 @@ describe('hydrateKey', () => {
         describe("runs the test", () => {
             it("runs hydrateKey", done => {
                 hydrateKey({}, '${list}')
-                //.tap(console.log)
                     .pull(done)
             });
         });

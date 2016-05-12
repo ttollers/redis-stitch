@@ -67,7 +67,7 @@ var hydrateString = R.curry((db, local, string) => {
 function hydrateProps(obj) {
     if (obj.props.length) {
         const getJsonValue = x => R.path(obj.props, JSON.parse(x));
-        var value = R.tryCatch(getJsonValue, () => obj.value)(obj.value);
+        var value = R.tryCatch(getJsonValue, R.always(obj.value))(obj.value);
         if(R.isNil(value)) {
             throw {
                 "type": "KeyPropNotFound",

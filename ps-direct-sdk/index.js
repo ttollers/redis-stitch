@@ -6,7 +6,6 @@ var stringify = require("./lib/stringify");
 var R = require("ramda");
 var hl = require("highland");
 
-
 module.exports = function (config) {
     var db = database(config);
     return {
@@ -25,9 +24,7 @@ module.exports = function (config) {
                 : db.delFromKeyByScore(key, Number(value));
         },
         get: key => hydrateString(db, {}, "${" + key + "}").map(x => {
-            return R.tryCatch(JSON.parse, () => x)(x);
+            return R.tryCatch(JSON.parse, R.always(x))(x);
         })
     }
 };
-
-

@@ -60,8 +60,6 @@ describe('v1 api', () => {
         it('should 404 when there is no data', (done) => {
             del('/v1/hello/world')
                 .pull(() => {
-                    console.log("here");
-                    
                     request
                         .get('/v1/hello/world')
                         .expect(404)
