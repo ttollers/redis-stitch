@@ -1,11 +1,20 @@
 "use strict";
 
-var rewire = require('rewire');
+var assert = require("chai").assert;
+var config = {
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "database": "redis"
+};
+
+var presentationService = require('../index');
+var ps = presentationService(config);
 var chai = require('chai');
 var assert = chai.assert;
 var R = require('ramda');
 var hl = require('highland');
-var sinon = require('sinon');
 
 var assertEquals = function (obj1) {
     return function (obj2) {
@@ -13,30 +22,9 @@ var assertEquals = function (obj1) {
     }
 };
 
-
-const stubStdout = () => {
-    var origStdoutWrite = process.stdout.write;
-    var logFilterPattern = /(info\:)|(ResourceNotFoundError)/;
-
-    //filter log output
-    sinon.stub(process.stdout, 'write', function() {
-        var args = Array.prototype.slice.call(arguments);
-        if (!logFilterPattern.test(args[0])) {
-            return origStdoutWrite.apply(process.stdout, args);
-        }
-    });
-};
-
-const restoreStdout = () => process.stdout.write.restore.bind();
-
 describe('unit tests', () => {
 
-    before(stubStdout);
-    after(restoreStdout);
-
     describe('sdk', () => {
-        var presentationService = require('../sdk');
-        var ps = presentationService();
 
         it('exists', () => assert.ok(ps));
 
@@ -195,22 +183,13 @@ describe('unit tests', () => {
                 .tap(assertEquals([1, 2]))
                 .pull(done)
         });
-        
-        it("handles resource not founds", (done) => {
-           ps.get("/v1/notFoundResource")
-               .pull((err, res) => {
-                   assert.ok(err);
-                   done();
-               })
-        });
 
         it('rejects non-string values passed to put', (done) => {
             ps.put('/v1/NonStringPutTest', {'data': 'data'})
-                .tap(console.log)
-                .pull((err, res) => {
-                    assert.ok(err);
-                    done();
-                });
+                .stopOnError(err => {
+                })
+                .tap(() => assert.fail('Should have failed'))
+                .pull(done);
         });
     });
 });
