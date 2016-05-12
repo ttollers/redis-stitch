@@ -8,12 +8,6 @@ var hl = require("highland");
 
 
 module.exports = function (config) {
-
-    if (config === void 0) {
-        config = {
-            "database": "fakeRedis"
-        }
-    }
     var db = database(config);
     return {
         put: (key, value) => {

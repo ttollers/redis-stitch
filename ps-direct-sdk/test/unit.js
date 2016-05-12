@@ -1,16 +1,8 @@
 "use strict";
 
 var assert = require("chai").assert;
-var config = {
-    "redis": {
-        "host": "127.0.0.1",
-        "port": 6379
-    },
-    "database": "redis"
-};
-
 var presentationService = require('../index');
-var ps = presentationService(config);
+var ps = presentationService();
 var chai = require('chai');
 var assert = chai.assert;
 var R = require('ramda');
