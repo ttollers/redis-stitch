@@ -1,6 +1,6 @@
 {
   "name": "ps-direct-sdk",
-  "version": "0.0.8",
+  "version": "2.1.1",
   "description": "Directly ",
   "main": "index.js",
   "scripts": {
