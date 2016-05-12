@@ -17,7 +17,6 @@ var config = {
     "allowedMethods": ["GET", "PUT", "DELETE"],
     "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
 };
-
 var server = rewire("../server.js");
 server(config);
 var app = server.__get__('server');
@@ -36,7 +35,6 @@ var add = hl.wrapCallback((key, score, value, cb) => {
         .send(value)
         .end(cb);
 });
-
 var del = hl.wrapCallback((key, cb) => {
     request.del(key).end(cb);
 });
@@ -62,6 +60,8 @@ describe('v1 api', () => {
         it('should 404 when there is no data', (done) => {
             del('/v1/hello/world')
                 .pull(() => {
+                    console.log("here");
+                    
                     request
                         .get('/v1/hello/world')
                         .expect(404)

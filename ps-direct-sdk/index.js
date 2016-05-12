@@ -1,7 +1,7 @@
 "use strict";
 
 var database = require("./db.js");
-var hydrateString = require("./hydrateString");
+var hydrateString = require("./lib/hydrateString");
 var stringify = require("./lib/stringify");
 var R = require("ramda");
 var hl = require("highland");
@@ -26,10 +26,11 @@ module.exports = function (config) {
         del: db.delKey,
         add: db.addToKey,
         rem: function (key, value) {
-            return isNaN(value) ? db.delFromKey(key, value)
+            return R.isNil(value) ? db.delKey(key)
+                : isNaN(value) ? db.delFromKey(key, value)
                 : db.delFromKeyByScore(key, Number(value));
         },
-        get: key => hydrateString({}, "${" + key + "}", db).map(x => {
+        get: key => hydrateString(db, {}, "${" + key + "}").map(x => {
             return R.tryCatch(JSON.parse, () => x)(x);
         })
     }

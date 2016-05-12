@@ -61,8 +61,8 @@ describe('unit tests', () => {
             ps.del('/v1/404test')
                 .flatMap(() => ps.get('/v1/404test'))
                 .errors(e => {
-                    assert(R.is(Error, e), 'throws an err');
                     assertEquals(e.message, '/v1/404test not available');
+                    assertEquals(e.type, 'KeyNotFound');
                 })
                 .pull(done);
         });
