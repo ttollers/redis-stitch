@@ -7,16 +7,16 @@ var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
 var config = {
-    "redis": {
+    "redis": process.env.USE_REDIS === 'true' ? {
         "host": "127.0.0.1",
         "port": 6379
-    },
+    } : void 0,
     "server": {
         "port": 8080
     },
-    "allowedMethods": ["GET", "PUT", "DELETE"],
-    "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
+    "allowedMethods": ["GET", "PUT", "DELETE"]
 };
+
 var server = rewire("../server.js");
 server(config);
 var app = server.__get__('server');
