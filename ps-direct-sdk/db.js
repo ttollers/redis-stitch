@@ -2,9 +2,11 @@
 
 var hl = require('highland');
 var logger = require('winston');
+var R = require("ramda");
+
 
 module.exports = function (config) {
-    var client = config.database === 'fakeRedis' ? initFakeRedis(config) : initRealRedis(config);
+    var client = R.isNil(config) ? initFakeRedis() : initRealRedis(config);
     logger.verbose('Initialised connection to database');
 
     return {
@@ -49,8 +51,8 @@ function initRealRedis(config) {
     var redis = require('redis');
     hl.streamifyAll(redis.RedisClient.prototype);
     hl.streamifyAll(redis.Multi.prototype);
-    const PORT = config.redis.port;
-    const HOST = config.redis.host;
+    const PORT = config.port;
+    const HOST = config.host;
     logger.verbose('connected to redis at %s:%s', HOST, PORT, {});
     return redis.createClient(PORT, HOST);
 }

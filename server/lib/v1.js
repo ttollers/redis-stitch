@@ -4,7 +4,6 @@ var R = require('ramda');
 var hl = require('highland');
 var restify = require('restify');
 var logger = require('winston').loggers.get('elasticsearch');
-var hydrateString = require("./hydrateString");
 
 logger.transports.console.timestamp = true;
 
@@ -33,7 +32,7 @@ module.exports = function (db) {
     return {
         get(req, res, next) {
             const key = decodeURIComponent(req.path());
-            hydrateString(db, {}, "${" + key + "}")
+            db.get(key)
                 .errors(logStreamExceptions(req))
                 .stopOnError(e => {
                     switch(e.type) {
@@ -69,9 +68,9 @@ module.exports = function (db) {
                 .reduce1(R.concat)
                 .flatMap(value => {
                     if (R.isNil(score)) {
-                        return db.setKey(key, value);
+                        return db.put(key, value);
                     } else if (!isNaN(score)) {
-                        return db.addToKey(key, score, value);
+                        return db.add(key, score, value);
                     } else {
                         throw new restify.BadRequestError('score must be a number');
                     }
@@ -87,12 +86,7 @@ module.exports = function (db) {
         },
         del(req, res, next) {
             const key = decodeURIComponent(req.path());
-
-            const stream = req.query.value == null ? db.delKey(key)
-                : isNaN(req.query.value) ? db.delFromKey(key, req.query.value)
-                : db.delFromKeyByScore(key, Number(req.query.value));
-
-            stream
+            db.rem(key, req.query.value)
                 .errors(logStreamExceptions(req))
                 .stopOnError(next)
                 .done(() => {

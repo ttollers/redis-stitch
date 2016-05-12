@@ -6,14 +6,12 @@ var hl = require('highland');
 var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
-var config = {
-    "redis": {"host": "127.0.0.1", "port": 6379},
-    "server": {"port": 8080},
-    "allowedMethods": ["GET", "PUT", "DELETE"],
-    "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
-};
+var config = process.env.USE_REDIS === 'true' ? {
+        "host": "127.0.0.1",
+        "port": 6379
+    } : void 0;
 
-var db = require("../lib/db")(config);
+var db = require("../db")(config);
 var hydrateString = require('../lib/hydrateString');
 var hydrateKey = hydrateString(db)
 function deleteAndSetDb(type, values) {
@@ -175,7 +173,6 @@ describe('hydrateKey', () => {
         describe("runs the test", () => {
             it("runs hydrateKey", done => {
                 hydrateKey({}, '${list}')
-                //.tap(console.log)
                     .pull(done)
             });
         });
@@ -250,7 +247,7 @@ describe('hydrateKey', () => {
 
     describe("Edge case when string is added to database inbetween getMultiple and listKey", () => {
         var sinon = require("sinon");
-        var edgeDb = require("../lib/db");
+        var edgeDb = require("../db");
 
         edgeDb.getMultiple = sinon.stub();
         edgeDb.listKey = sinon.stub();

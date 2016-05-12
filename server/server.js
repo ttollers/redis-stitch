@@ -14,10 +14,10 @@ module.exports = function (config) {
         return APIname.toUpperCase() === 'DEL' ? 'DELETE' : APIname.toUpperCase();
     }
 
-    var redisClient = require('./lib/db')(config);
+    var db = require("ps-direct-sdk")(config.redis);
 
     function useAPI(prefix, server) {
-        var api = require('./lib/' + prefix)(redisClient);
+        var api = require('./lib/' + prefix)(db);
         for (var method in api) {
             if (api.hasOwnProperty(method) && R.contains(translateAPIMethodName(method), config.allowedMethods)) {
                 server[method](new RegExp('\/' + prefix + '\/.+'), api[method]);

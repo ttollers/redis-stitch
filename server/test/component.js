@@ -7,15 +7,14 @@ var logger = require('winston').loggers.get('elasticsearch');
 logger.transports.console.silent = true;
 
 var config = {
-    "redis": {
+    "redis": process.env.USE_REDIS === 'true' ? {
         "host": "127.0.0.1",
         "port": 6379
-    },
+    } : void 0,
     "server": {
         "port": 8080
     },
-    "allowedMethods": ["GET", "PUT", "DELETE"],
-    "database": process.env.USE_REDIS === 'true' ? "redis" : "fakeRedis"
+    "allowedMethods": ["GET", "PUT", "DELETE"]
 };
 
 var server = rewire("../server.js");
@@ -36,7 +35,6 @@ var add = hl.wrapCallback((key, score, value, cb) => {
         .send(value)
         .end(cb);
 });
-
 var del = hl.wrapCallback((key, cb) => {
     request.del(key).end(cb);
 });
