@@ -4,7 +4,6 @@ var assert = require("chai").assert;
 var presentationService = require('../index');
 var ps = presentationService();
 var chai = require('chai');
-var assert = chai.assert;
 var R = require('ramda');
 var hl = require('highland');
 
