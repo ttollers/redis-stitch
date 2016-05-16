@@ -1,6 +1,6 @@
 {
   "name": "presentation-service",
-  "version": "2.1.3",
+  "version": "2.1.6",
   "description": "SDK for the presentation service",
   "main": "sdk.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "jshint": "2.9.1",
     "mocha": "2.4.5",
     "rewire": "2.5.1",
-    "presentation-service-server": "2.1.4",
+    "presentation-service-server": "2.1.6",
     "sinon": "1.17.3",
     "david": "7.0.1"
   }

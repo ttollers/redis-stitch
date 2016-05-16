@@ -8,14 +8,10 @@ module.exports = function (presentationServiceUrl) {
     var request = require('superagent');
 
     if (R.isNil(presentationServiceUrl)) { // Test code
-
         var config = {
-            "redis": {"host": "127.0.0.1", "port": 6379},
             "server": {"port": 8080},
-            "allowedMethods": ["GET", "PUT", "DELETE"],
-            "database": "fakeRedis"
+            "allowedMethods": ["GET", "PUT", "DELETE"]
         };
-
         require('presentation-service-server')(config);
         presentationServiceUrl = 'http://localhost:8080';
     }

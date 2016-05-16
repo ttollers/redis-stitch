@@ -12,7 +12,6 @@ var assertEquals = function (expected) {
     }
 };
 
-
 const stubStdout = () => {
     var origStdoutWrite = process.stdout.write;
     var logFilterPattern = /(info\:)|(ResourceNotFoundError)/;
