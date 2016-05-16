@@ -1,13 +1,13 @@
 "use strict";
 
-var assert = require("chai").assert;
-var presentationService = require('../index');
-var ps = presentationService();
-var chai = require('chai');
-var R = require('ramda');
-var hl = require('highland');
+const assert = require('chai').assert;
+const presentationService = require('../index');
+const ps = presentationService();
+const chai = require('chai');
+const R = require('ramda');
+const hl = require('highland');
 
-var assertEquals = function (obj1) {
+const assertEquals = function (obj1) {
     return function (obj2) {
         assert(R.equals(obj1, obj2));
     }
@@ -59,7 +59,7 @@ describe('unit tests', () => {
         });
 
         it('can put and get an object using the putObject method', (done)=> {
-            var obj = {"data": {"type": "un-stringified data"}};
+            const obj = {"data": {"type": "un-stringified data"}};
             ps.putObject('/v1/putObjectTest', obj)
                 .flatMap(() => ps.get('/v1/putObjectTest'))
                 .tap(assert.ok)
