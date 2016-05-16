@@ -1,17 +1,15 @@
 "use strict";
 
-var assert = require("chai").assert;
-var presentationService = require('../index');
-var config = process.env.USE_REDIS === 'true' ? {
+const presentationService = require('../index');
+const config = process.env.USE_REDIS === 'true' ? {
     "host": "127.0.0.1",
     "port": 6379
 } : void 0;
-var ps = presentationService(config);
-var chai = require('chai');
-var R = require('ramda');
-var hl = require('highland');
-
-var assertEquals = function (obj1) {
+const ps = presentationService(config);
+const assert = require("chai").assert;
+const R = require('ramda');
+const hl = require('highland');
+const assertEquals = function (obj1) {
     return function (obj2) {
         assert(R.equals(obj1, obj2));
     }
@@ -63,7 +61,7 @@ describe('unit tests', () => {
         });
 
         it('can put and get an object using the putObject method', (done)=> {
-            var obj = {"data": {"type": "un-stringified data"}};
+            const obj = {"data": {"type": "un-stringified data"}};
             ps.putObject('/v1/putObjectTest', obj)
                 .flatMap(() => ps.get('/v1/putObjectTest'))
                 .tap(assert.ok)
