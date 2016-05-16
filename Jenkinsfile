@@ -8,7 +8,8 @@ def runTests() {
         cd $npmfolder;
         pwd;
         npm prune;
-        npm install --no-optional;
+        npm install;
+        npm update;
         npm test;
         cd ../
     fi
