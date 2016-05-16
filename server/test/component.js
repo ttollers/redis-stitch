@@ -81,22 +81,22 @@ describe('v1 api', () => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
                     .get('/v1/hello/world')
-                    .expect(200, 'my value')
+                    .expect(200, '"my value"')
                     .end(done);
             });
         });
 
         it('should get list data saved in redis', (done) => {
-            set("/v1/hello/world", "my value")
-                .flatMap(set("/v1/hello/world2", "my value2"))
-                .flatMap(set("/v1/hello/world3", "my value3"))
+            set("/v1/hello/world", '"my value"')
+                .flatMap(set("/v1/hello/world2", '"my value2"'))
+                .flatMap(set("/v1/hello/world3", '"my value3"'))
                 .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
                 .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
                 .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
                 .pull(() => {
                     request
                         .get("/v1/list")
-                        .expect(200, '[my value,my value2,my value3]')
+                        .expect(200, ["my value","my value2","my value3"])
                         .end(done);
                 })
         });
@@ -132,9 +132,9 @@ describe('v1 api', () => {
         });
 
         it('should delete values from a list in the db', (done) => {
-            set("/v1/hello/world", "my value")
-                .flatMap(set("/v1/hello/world2", "my value2"))
-                .flatMap(set("/v1/hello/world3", "my value3"))
+            set("/v1/hello/world", '"my value"')
+                .flatMap(set("/v1/hello/world2", '"my value2"'))
+                .flatMap(set("/v1/hello/world3", '"my value3"'))
                 .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
                 .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
                 .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
@@ -148,16 +148,16 @@ describe('v1 api', () => {
                         .end(() => {
                             request
                                 .get("/v1/list")
-                                .expect(200, "[my value,my value3]")
+                                .expect(200, ["my value", "my value3"])
                                 .end(done);
                         });
                 });
         });
 
         it('should delete values from a list by score', (done) => {
-            set("/v1/hello/world", "my value")
-                .flatMap(set("/v1/hello/world2", "my value2"))
-                .flatMap(set("/v1/hello/world3", "my value3"))
+            set("/v1/hello/world", '"my value"')
+                .flatMap(set("/v1/hello/world2", '"my value2"'))
+                .flatMap(set("/v1/hello/world3", '"my value3"'))
                 .flatMap(add("/v1/list", 0, "${/v1/hello/world}"))
                 .flatMap(add("/v1/list", 2, "${/v1/hello/world2}"))
                 .flatMap(add("/v1/list", 3, "${/v1/hello/world3}"))
@@ -171,7 +171,7 @@ describe('v1 api', () => {
                         .end(() => {
                             request
                                 .get("/v1/list")
-                                .expect(200, "[my value,my value3]")
+                                .expect(200, ["my value", "my value3"])
                                 .end(done);
                         });
                 });

@@ -54,8 +54,7 @@ module.exports = function (db) {
                     }
                 })
                 .each(output => {
-                    res.write(output);
-                    res.end();
+                    res.send(output);
                     next();
                 });
         },
