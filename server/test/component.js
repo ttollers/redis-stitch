@@ -81,7 +81,7 @@ describe('v1 api', () => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
                     .get('/v1/hello/world')
-                    .expect(200, "my value")
+                    .expect(200, '"my value"')
                     .end(done);
             });
         });
@@ -96,7 +96,7 @@ describe('v1 api', () => {
                 .pull(() => {
                     request
                         .get("/v1/list")
-                        .expect(200, '[my value,my value2,my value3]')
+                        .expect(200, '"[my value,my value2,my value3]"')
                         .end(done);
                 })
         });
@@ -148,7 +148,7 @@ describe('v1 api', () => {
                         .end(() => {
                             request
                                 .get("/v1/list")
-                                .expect(200, "[my value,my value3]")
+                                .expect(200, '"[my value,my value3]"')
                                 .end(done);
                         });
                 });
@@ -171,7 +171,7 @@ describe('v1 api', () => {
                         .end(() => {
                             request
                                 .get("/v1/list")
-                                .expect(200, "[my value,my value3]")
+                                .expect(200, '"[my value,my value3]"')
                                 .end(done);
                         });
                 });
@@ -188,5 +188,4 @@ describe('v1 api', () => {
                     .end(done);
             });
     });
-
 });
