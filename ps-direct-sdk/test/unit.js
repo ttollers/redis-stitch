@@ -1,12 +1,14 @@
 "use strict";
 
-const assert = require('chai').assert;
 const presentationService = require('../index');
-const ps = presentationService();
-const chai = require('chai');
+const config = process.env.USE_REDIS === 'true' ? {
+    "host": "127.0.0.1",
+    "port": 6379
+} : void 0;
+const ps = presentationService(config);
+const assert = require("chai").assert;
 const R = require('ramda');
 const hl = require('highland');
-
 const assertEquals = function (obj1) {
     return function (obj2) {
         assert(R.equals(obj1, obj2));

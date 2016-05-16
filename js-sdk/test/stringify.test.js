@@ -1,6 +1,4 @@
-/**
- * Created by tomtollinton on 16/03/2016.
- */
+"use strict";
 
 var assert = require("chai").assert;
 var stringify = require("../lib/stringify");
