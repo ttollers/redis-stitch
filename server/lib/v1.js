@@ -54,7 +54,8 @@ module.exports = function (db) {
                     }
                 })
                 .each(output => {
-                    res.write(output);
+                    if(R.is(String, output)) res.write(output);
+                    else res.send(output);
                     res.end();
                     next();
                 });

@@ -81,7 +81,7 @@ describe('v1 api', () => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
                     .get('/v1/hello/world')
-                    .expect(200, 'my value')
+                    .expect(200, "my value")
                     .end(done);
             });
         });
@@ -188,4 +188,5 @@ describe('v1 api', () => {
                     .end(done);
             });
     });
+
 });

@@ -69,14 +69,8 @@ var putObject = R.curry(function (request, psUrl, key, value) {
 
 var catchRestErr = function (cb) {
     return function (err, res) {
-        var output;
         if (res.statusCode === 200) {
-            try {
-                output = JSON.parse(res.text);
-            } catch (e) {
-                output = res.text;
-            }
-            return cb(null, output);
+            return cb(null, res.body);
         } else if (res.statusCode === 204) {
             return cb(null, res.header.Location);
         } else {
