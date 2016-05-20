@@ -60,6 +60,11 @@ var hydrateString = R.curry((db, local, string) => {
         .reduce(splits, populateArrayWithValues)
         .flatMap(function (x) {
             return hydrateString(db, local, x.join(""));
+        })
+        .consume((err, hydratedString, push) => {
+            if(err && err.type === "DefaultAsKeyNotFound") push(null, err.message);
+            else if(err) push(err);
+            else push(null, hydratedString);
         });
 });
 
