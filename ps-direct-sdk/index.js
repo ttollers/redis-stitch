@@ -25,7 +25,6 @@ module.exports = function (config) {
         },
         get: (key, type) => hydrateString(db, {}, "${" + key + "}").map(x => {
             if(type === "json" || type === void 0) {
-
                 return R.tryCatch(JSON.parse, R.always(x))(x);
             } else {
                 return x;
