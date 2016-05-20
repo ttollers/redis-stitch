@@ -184,5 +184,34 @@ describe('unit tests', () => {
                 .tap(() => assert.fail('Should have failed'))
                 .pull(done);
         });
+
+        describe("get() gives back the right type", () => {
+
+            before(done => ps.del('correct/type')
+                .flatMap(() => ps.put("correct/type", `{"data": "some great json data"}`))
+                .pull(done));
+
+            it("give back json is json is asked for", (done) => {
+                 ps.get("correct/type", "json")
+                    .tap(assertEquals({
+                        "data": "some great json data"
+                    }))
+                    .pull(done)
+            });
+
+            it("give back json is json if undefined is given", (done) => {
+                 ps.get("correct/type")
+                    .tap(assertEquals({
+                        "data": "some great json data"
+                    }))
+                    .pull(done)
+            });
+
+            it("give back string as string was asked for", (done) => {
+                 ps.get("correct/type", "string")
+                    .tap(assertEquals('{"data": "some great json data"}'))
+                    .pull(done)
+            });
+        })
     });
 });
