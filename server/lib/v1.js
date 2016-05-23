@@ -32,7 +32,7 @@ module.exports = function (db) {
     return {
         get(req, res, next) {
             const key = decodeURIComponent(req.path());
-            db.get(key, "string")
+            db.get(key)
                 .errors(logStreamExceptions(req))
                 .stopOnError(e => {
                     switch(e.type) {
