@@ -268,4 +268,15 @@ describe('hydrateKey', () => {
                 });
         })
     });
+
+    describe("Bug where slash n was getting into stuff and creating new lines that can't be parsed", () => {
+        it("should correctly escape this datae", (done) => {
+            deleteAndSetDb("setKey", ["key", '{"imageCredit": "\\nVincent Cole"}'])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    assert.equal(data, "\\nVincent Cole");
+                    done();
+                });
+        });
+    });
 });
