@@ -23,8 +23,6 @@ module.exports = function (config) {
                 : isNaN(value) ? db.delFromKey(key, value)
                 : db.delFromKeyByScore(key, Number(value));
         },
-        get: key => hydrateString(db, {}, "${" + key + "}").map(x => {
-            return R.tryCatch(JSON.parse, R.always(x))(x);
-        })
+        get: key => hydrateString(db, {}, "${" + key + "}")
     }
 };
