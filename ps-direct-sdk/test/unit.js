@@ -11,7 +11,7 @@ const R = require('ramda');
 const hl = require('highland');
 const assertEquals = function (obj1) {
     return function (obj2) {
-        assert(R.equals(obj1, obj2));
+        assert.equal(obj2, obj1);
     }
 };
 
@@ -65,7 +65,7 @@ describe('unit tests', () => {
             ps.putObject('/v1/putObjectTest', obj)
                 .flatMap(() => ps.get('/v1/putObjectTest'))
                 .tap(assert.ok)
-                .tap(assertEquals(obj))
+                .tap(assertEquals("{\"data\": {\"type\": \"un-stringified data\"}}"))
                 .pull(done)
         });
 
@@ -85,7 +85,7 @@ describe('unit tests', () => {
                 .flatMap(() => ps.add('/v1/objectListTest', 1, '{"data": "some data 1"}'))
                 .flatMap(() => ps.get('/v1/objectListTest'))
                 .tap(assert.ok)
-                .tap(assertEquals(['some data 0', {data: 'some data 1'}]))
+                .tap(assertEquals("[\"some data 0\",{\"data\": \"some data 1\"}]"))
                 .pull(done)
         });
 
@@ -105,7 +105,7 @@ describe('unit tests', () => {
                 .flatMap(() => ps.putObject('/v1/simpleReferenceTest/linked', {"data": "this is just some data"}))
                 .flatMap(() => ps.get('/v1/simpleReferenceTest/main'))
                 .tap(assert.ok)
-                .tap(assertEquals({"data": "this is just some data"}))
+                .tap(assertEquals('{"data": "this is just some data"}'))
                 .pull(done)
         });
 
@@ -117,7 +117,7 @@ describe('unit tests', () => {
                 .flatMap(() => ps.putObject('/v1/objectReferenceTest/linked', {"data": "data"}))
                 .flatMap(() => ps.get('/v1/objectReferenceTest/main'))
                 .tap(assert.ok)
-                .tap(assertEquals({"data": "data", "innerData": {"data": "data"}}))
+                .tap(assertEquals('{"data": "data", "innerData": {"data": "data"}}'))
                 .pull(done)
         });
 
@@ -132,12 +132,14 @@ describe('unit tests', () => {
                 .flatMap(ps.put('/v1/referenceList/2', '{ "data": "this is just some data2" }'))
                 .flatMap(ps.put('/v1/referenceList/3', '{ "data": "this is just some data3" }'))
                 .flatMap(() => ps.get('/v1/referenceList'))
-                .tap(assertEquals([
-                    {"data": "this is just some data0"},
-                    {"data": "this is just some data1"},
-                    {"data": "this is just some data2"},
-                    {"data": "this is just some data3"}
-                ]))
+                .tap(x => {
+                    assert.deepEqual(JSON.parse(x), [
+                        {"data": "this is just some data0"},
+                        {"data": "this is just some data1"},
+                        {"data": "this is just some data2"},
+                        {"data": "this is just some data3"}
+                    ])
+                })
                 .pull(done)
         });
 
@@ -165,15 +167,15 @@ describe('unit tests', () => {
                 .flatMap(ps.put('/v1/filterTest/2', '2'))
                 .flatMap(ps.put('/v1/filterTest/3', '3'))
                 .flatMap(() => ps.get('/v1/filterTest[1|2]'))
-                .tap(assertEquals([1, 2]))
+                .tap(assertEquals("[1,2]"))
                 .flatMap(() => ps.get('/v1/filterTest[|2]'))
-                .tap(assertEquals([0, 1, 2]))
+                .tap(assertEquals("[0,1,2]"))
                 .flatMap(() => ps.get('/v1/filterTest[1|]'))
-                .tap(assertEquals([1, 2, 3]))
+                .tap(assertEquals("[1,2,3]"))
                 .flatMap(() => ps.get('/v1/filterTest^2'))
-                .tap(assertEquals([0, 1]))
+                .tap(assertEquals("[0,1]"))
                 .flatMap(() => ps.get('/v1/filterTest[1|]^2'))
-                .tap(assertEquals([1, 2]))
+                .tap(assertEquals("[1,2]"))
                 .pull(done)
         });
 
@@ -191,23 +193,8 @@ describe('unit tests', () => {
                 .flatMap(() => ps.put("correct/type", `{"data": "some great json data"}`))
                 .pull(done));
 
-            it("give back json is json is asked for", (done) => {
-                 ps.get("correct/type", "json")
-                    .tap(assertEquals({
-                        "data": "some great json data"
-                    }))
-                    .pull(done)
-            });
 
-            it("give back json is json if undefined is given", (done) => {
-                 ps.get("correct/type")
-                    .tap(assertEquals({
-                        "data": "some great json data"
-                    }))
-                    .pull(done)
-            });
-
-            it("give back string as string was asked for", (done) => {
+            it("Should always give back a string", (done) => {
                  ps.get("correct/type", "string")
                     .tap(assertEquals('{"data": "some great json data"}'))
                     .pull(done)

@@ -1,6 +1,6 @@
 {
   "name": "ps-direct-sdk",
-  "version": "2.1.9",
+  "version": "2.1.11",
   "description": "Directly ",
   "main": "index.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "highland": "^2.7.4",
+    "js-string-escape": "^1.0.1",
     "ramda": "^0.21.0",
     "redis": "^2.5.3",
     "winston": "^2.2.0"

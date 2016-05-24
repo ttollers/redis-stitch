@@ -267,4 +267,25 @@ describe('hydrateKey', () => {
                 });
         })
     });
+
+    describe("Bug where slash n was getting into stuff and creating new lines that can't be parsed", () => {
+
+        it("should correctly escape the name", (done) => {
+            deleteAndSetDb("setKey", ["key", '{"imageCredit": "\\nVincent Cole"}'])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    assert.equal(data, "\\nVincent Cole");
+                    done();
+                });
+        });
+
+        it("should also correctly escape when the entitiy is in the middle of the string", (done) => {
+            deleteAndSetDb("setKey", ["key", '{"imageCredit": "Vin\\ncent\\n Cole\\n"}'])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    assert.equal(data, "Vin\\ncent\\n Cole\\n");
+                    done();
+                });
+        });
+    });
 });

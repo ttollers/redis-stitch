@@ -2,6 +2,7 @@
 
 var hl = require("highland");
 var R = require("ramda");
+var escape = require('js-string-escape');
 
 var hydrateString = R.curry((db, local, string) => {
     const splits = R.flatten(splitStringByRef(string)
@@ -79,7 +80,10 @@ function hydrateProps(obj) {
                 "message": [obj.key].concat(obj.props).reverse().join(' of ') + ' not available'
             };
         }
-        else return R.assoc("value", value, obj);
+        else {
+            const retValue = R.is(String, value) ? escape(value) : value;
+            return R.assoc("value", retValue, obj);
+        }
     }
     else {
         return obj;
