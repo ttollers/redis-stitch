@@ -83,9 +83,8 @@ describe('hydrateKey', () => {
         deleteAndSetDb("setKey", ["key", "asdf ${not_here}"])
             .flatMap(db.delKey("area"))
             .flatMap(hydrateKey({}, '${key;null}'))
-            .pull((err, res) => {
-                assert.equal(err.type, "DefaultAsKeyNotFound");
-                assert.equal(err.message, "null");
+            .pull((err, value) => {
+                assert.equal(value, "null");
                 done();
             })
     });
