@@ -1,36 +1,24 @@
 "use strict";
 
-var R = require('ramda');
-var hl = require('highland');
-var restify = require('restify');
-var logger = require('winston').loggers.get('elasticsearch');
+const R = require('ramda');
+const hl = require('highland');
+const restify = require('restify');
+const BeneLogger = require('bene-logger');
 
-logger.transports.console.timestamp = true;
+const logger = new BeneLogger();
 
-var logOutput = R.curry((msg, direction, req, data) => {
-    logger.info(msg, {
-        request_id: req.id(),
-        method: req.method,
-        url: req.url,
-        direction: direction
-    });
-    return data;
-});
-
-var logStreamExceptions = R.curry((req, err, push) => {
-    //error message for elasticsearch, with a correlation id
+const logStreamExceptions = R.curry((req, err, push) => {
     logger.error('endpoint', {
         request_id: req.id(),
-        err_message: err.message
+        err: err
     });
-    //output stack for cloudformation only
-    console.log(err.stack);
-    push(err, null);
+    push(err);
 });
 
 module.exports = function (db) {
     return {
         get(req, res, next) {
+            logger.time('GET completed');
             const key = decodeURIComponent(req.path());
             db.get(key)
                 .errors(logStreamExceptions(req))
@@ -56,14 +44,20 @@ module.exports = function (db) {
                 .each(output => {
                     res.write(output);
                     res.end();
+                    logger.timeEnd('GET completed', {
+                        status: res.statusCode,
+                        method: req.method,
+                        request_id: req.id(),
+                        key: key
+                    });
                     next();
                 });
         },
         put(req, res, next) {
+            logger.time('PUT completed');
             const key = decodeURIComponent(req.path());
             const score = req.query.score && parseInt(req.query.score);
             hl(req)
-                .tap(logOutput("endpoint", "incoming", req))
                 .invoke('toString', ['utf8'])
                 .reduce1(R.concat)
                 .flatMap(value => {
@@ -75,16 +69,23 @@ module.exports = function (db) {
                         throw new restify.BadRequestError('score must be a number');
                     }
                 })
-                .tap(logOutput("endpoint", "outgoing", req))
                 .errors(logStreamExceptions(req))
                 .stopOnError(next)
                 .done(() => {
                     res.setHeader('Location', req.url);
                     res.send(204);
+                    logger.timeEnd('PUT completed', {
+                        status: res.statusCode,
+                        method: req.method,
+                        request_id: req.id(),
+                        key: key,
+                        score: score
+                    });
                     return next();
                 });
         },
         del(req, res, next) {
+            logger.time('DELETE completed');
             const key = decodeURIComponent(req.path());
             db.rem(key, req.query.value)
                 .errors(logStreamExceptions(req))
@@ -92,6 +93,12 @@ module.exports = function (db) {
                 .done(() => {
                     res.writeHead(204);
                     res.end();
+                    logger.timeEnd('DELETE completed', {
+                        status: res.statusCode,
+                        method: req.method,
+                        request_id: req.id(),
+                        key: key
+                    });
                     return next();
                 });
         }
