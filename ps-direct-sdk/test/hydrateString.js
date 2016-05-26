@@ -292,16 +292,6 @@ describe('hydrateKey', () => {
                 });
         });
 
-        it("should escape \\b", (done) => {
-            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vinc\\bent \\bri\\ban"}`])
-                .flatMap(hydrateKey({}, "${key,imageCredit}"))
-                .pull((err, data) => {
-                    const parse = JSON.parse('{"name": "' + data + '"}');
-                    assert.equal(parse.name, "Vinc\\bent \\bbri\\ban");
-                    done();
-                });
-        });
-
         it("escapes \\t \\f", (done) => {
             deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vinc\\trent bri\\fan"}`])
                 .flatMap(hydrateKey({}, "${key,imageCredit}"))
@@ -322,7 +312,7 @@ describe('hydrateKey', () => {
                 });
         });
 
-        it.only("should escape double quotes", (done) => {
+        it("should escape double quotes", (done) => {
             deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vincent O\\\"brian"}`])
                 .flatMap(hydrateKey({}, "${key,imageCredit}"))
                 .pull((err, data) => {
