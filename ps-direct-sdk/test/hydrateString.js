@@ -321,15 +321,5 @@ describe('hydrateKey', () => {
                     done();
                 });
         });
-
-        it("should not escape &", (done) => {
-            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vincent & brian"}`])
-                .flatMap(hydrateKey({}, "${key,imageCredit}"))
-                .pull((err, data) => {
-                    const parse = JSON.parse('{"name": "' + data + '"}');
-                    assert.equal(parse.name, "Vincent & brian");
-                    done();
-                });
-        });
     });
 });
