@@ -177,7 +177,6 @@ function escapeSpecialChars(str) {
         .replace(/\n/g, "\\\\n")
         .replace(/\r/g, "\\\\r")
         .replace(/\t/g, "\\\\t")
-        .replace(/"/g, '\\\"')
         .replace(/\f/g, "\\\\f");
 };
 
