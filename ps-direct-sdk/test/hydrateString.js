@@ -268,22 +268,56 @@ describe('hydrateKey', () => {
         })
     });
 
-    describe("Bug where slash n was getting into stuff and creating new lines that can't be parsed", () => {
+    describe("escapeSpecialChars", () => {
 
-        it("should correctly escape the name", (done) => {
-            deleteAndSetDb("setKey", ["key", '{"imageCredit": "\\nVincent Cole"}'])
+        it("should correctly escape \\n", (done) => {
+            deleteAndSetDb("setKey", ["key", '{"imageCredit": "Vin\\ncent\\n Cole\\n"}'])
                 .flatMap(hydrateKey({}, "${key,imageCredit}"))
                 .pull((err, data) => {
-                    assert.equal(data, "\\nVincent Cole");
+                    const parse = JSON.parse('{"name": "'+ data +'"}');
+                    assert.equal(parse.name, "Vin\\ncent\\n Cole\\n");
                     done();
                 });
         });
 
-        it("should also correctly escape when the entitiy is in the middle of the string", (done) => {
-            deleteAndSetDb("setKey", ["key", '{"imageCredit": "Vin\\ncent\\n Cole\\n"}'])
+        it("should escape \\r", (done) => {
+            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vinc\\rent \\rbri\\ran"}`])
                 .flatMap(hydrateKey({}, "${key,imageCredit}"))
                 .pull((err, data) => {
-                    assert.equal(data, "Vin\\ncent\\n Cole\\n");
+                    console.log(data);
+
+                    const parse = JSON.parse('{"name": "' + data + '"}');
+                    assert.equal(parse.name, "Vinc\\rent \\rbri\\ran");
+                    done();
+                });
+        });
+
+        it("escapes \\t \\f", (done) => {
+            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vinc\\trent bri\\fan"}`])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    const parse = JSON.parse('{"name": "' + data + '"}');
+                    assert.equal(parse.name, "Vinc\\trent bri\\fan");
+                    done();
+                });
+        });
+
+        it("should NOT escape apostrophe", (done) => {
+            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vincent O'brian"}`])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    const parse = JSON.parse('{"name": "'+ data +'"}');
+                    assert.equal(parse.name, "Vincent O'brian");
+                    done();
+                });
+        });
+
+        it("should escape double quotes", (done) => {
+            deleteAndSetDb("setKey", ["key", `{"imageCredit": "Vincent O\\\"brian"}`])
+                .flatMap(hydrateKey({}, "${key,imageCredit}"))
+                .pull((err, data) => {
+                    const parse = JSON.parse('{"name": "' + data + '"}');
+                    assert.equal(parse.name, "Vincent O\"brian");
                     done();
                 });
         });
