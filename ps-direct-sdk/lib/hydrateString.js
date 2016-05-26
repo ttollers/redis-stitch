@@ -3,6 +3,7 @@
 var hl = require("highland");
 var R = require("ramda");
 var escape = require('js-string-escape');
+var jsesc = require('jsesc');
 
 var hydrateString = R.curry((db, local, string) => {
     const splits = R.flatten(splitStringByRef(string)
@@ -81,7 +82,7 @@ function hydrateProps(obj) {
             };
         }
         else {
-            const retValue = R.is(String, value) ? escape(value) : value;
+            const retValue = R.is(String, value) ? escapeSpecialChars(value) : value;
             return R.assoc("value", retValue, obj);
         }
     }
@@ -172,5 +173,14 @@ function removeRefTag(input) {
     const m = input.match(/\${(.*?)}/);
     return m ? m[1] : input;
 }
+
+function escapeSpecialChars(str) {
+    return str
+        .replace(/\n/g, "\\\\n")
+        .replace(/\r/g, "\\\\r")
+        .replace(/\t/g, "\\\\t")
+        .replace(/"/g, '\\\"')
+        .replace(/\f/g, "\\\\f");
+};
 
 module.exports = hydrateString;
