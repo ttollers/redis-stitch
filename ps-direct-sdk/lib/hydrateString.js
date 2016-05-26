@@ -2,8 +2,6 @@
 
 var hl = require("highland");
 var R = require("ramda");
-var escape = require('js-string-escape');
-var jsesc = require('jsesc');
 
 var hydrateString = R.curry((db, local, string) => {
     const splits = R.flatten(splitStringByRef(string)
