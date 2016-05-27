@@ -3,11 +3,12 @@
 var server;
 
 module.exports = function (config) {
-    var R = require('ramda');
-    var restify = require('restify');
-    var logger = require('winston').loggers.get('elasticsearch');
-    logger.transports.console.timestamp = true;
-    var morgan = require('morgan');
+    const R = require('ramda');
+    const restify = require('restify');
+    const morgan = require('morgan');
+    const BeneLogger = require('bene-logger');
+
+    const logger = new BeneLogger();
     logger.info('Config', config);
 
     function translateAPIMethodName(APIname) {
