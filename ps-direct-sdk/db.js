@@ -1,12 +1,11 @@
 "use strict";
 
-var hl = require('highland');
-var logger = require('winston');
-var R = require("ramda");
+const hl = require('highland');
+const R = require("ramda");
 
-const logKey = (msg, key) => () => logger.info(msg, { key });
+const BeneLogger = require('bene-logger');
+const logger = new BeneLogger();
 
-const logKeyScore = (msg, key, score) => () => logger.info(msg, { score, key });
 
 module.exports = function (config) {
     var client = R.isNil(config) ? initFakeRedis() : initRealRedis(config);
@@ -14,8 +13,7 @@ module.exports = function (config) {
 
     return {
         getKey: (key) => {
-            logger.info('Retrieving key', { key });
-            return client.getStream(key).tap(logKey('Key retrieved', key));
+            return client.getStream(key);
         },
         listKey: function listKey(key, before, after, limit) {
             if (limit === Infinity) {
@@ -27,23 +25,19 @@ module.exports = function (config) {
             return client.mgetStream(keys);
         },
         setKey: function (key, value) {
-            logger.info('Setting key', { key });
-            return client.setStream(key, value).tap(logKey('Key set', key));
+            return client.setStream(key, value);
         },
         delKey: function delKey(key) {
-            logger.info('Deleting key', { key });
-            return client.delStream(key).tap(logKey('Key deleted', key));
+            return client.delStream(key);
         },
         addToKey: function addToKey(key, score, value) {
-            logger.info('Appending to list', { score, key });
-            return client.zaddStream(key, score, value).tap(logKeyScore('Appended to list', key, score));
+            return client.zaddStream(key, score, value);
         },
         delFromKey: function delFromKey(key, value) {
             return client.zremStream(key, value);
         },
         delFromKeyByScore: function (key, score) {
-            logger.info('Removing from list', { score, key });
-            return client.zremrangebyscoreStream(key, score, score).tap(logKeyScore('Removed from list', key, score));
+            return client.zremrangebyscoreStream(key, score, score);
         }
     };
 };
