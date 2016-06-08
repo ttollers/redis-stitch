@@ -3,8 +3,7 @@
 var rewire = require('rewire');
 var sinon = require('sinon');
 var hl = require('highland');
-var logger = require('winston').loggers.get('elasticsearch');
-logger.transports.console.silent = true;
+var R = require('ramda');
 
 var config = {
     "redis": process.env.USE_REDIS === 'true' ? {
@@ -16,6 +15,24 @@ var config = {
     },
     "allowedMethods": ["GET", "PUT", "DELETE"]
 };
+
+var origStdoutWrite = process.stdout.write;
+var origStderrWrite = process.stderr.write;
+var logFilterPattern = /(info|error\:)|(ResourceNotFoundError)/;
+
+//filter log output
+sinon.stub(process.stdout, 'write', function() {
+    var args = Array.prototype.slice.call(arguments);
+    if (!logFilterPattern.test(args[0])) {
+        return origStdoutWrite.apply(process.stdout, args);
+    }
+});
+sinon.stub(process.stderr, 'write', function() {
+    var args = Array.prototype.slice.call(arguments);
+    if (!logFilterPattern.test(args[0])) {
+        return origStderrWrite.apply(process.stderr, args);
+    }
+});
 
 var server = rewire("../server.js");
 server(config);
@@ -41,20 +58,23 @@ var del = hl.wrapCallback((key, cb) => {
 
 describe('v1 api', () => {
 
-    before(() => {
-        var origStdoutWrite = process.stdout.write;
-        var logFilterPattern = /(info\:)|(ResourceNotFoundError)/; 
-
-        //filter log output 
-        sinon.stub(process.stdout, 'write', function() {
-            var args = Array.prototype.slice.call(arguments);
-            if (!logFilterPattern.test(args[0])) {
-                return origStdoutWrite.apply(process.stdout, args);
-            }
-        });
+    // before(() => {
+    //     var origStdoutWrite = process.stdout.write;
+    //     var logFilterPattern = /(error\:)|(info\:)|(ResourceNotFoundError)/;
+    //
+    //     //filter log output
+    //     sinon.stub(process.stdout, 'write', function() {
+    //         var args = Array.prototype.slice.call(arguments);
+    //         if (!logFilterPattern.test(args[0])) {
+    //             return origStdoutWrite.apply(process.stdout, args);
+    //         }
+    //     });
+    // });
+    //
+    after(()=> {
+        process.stdout.write.restore();
+        process.stderr.write.restore();
     });
-
-    after(()=>process.stdout.write.restore());
 
     describe('get', () => {
         it('should 404 when there is no data', (done) => {

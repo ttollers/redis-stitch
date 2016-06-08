@@ -4,7 +4,7 @@
   "description": "Server component for the presentation service",
   "main": "server.js",
   "scripts": {
-    "test": "mocha --recursive test/",
+    "test": "istanbul cover --report lcov --print detail _mocha -- -R spec --recursive test/",
     "lint": "jshint server.js lib/",
     "pretest": "npm run lint",
     "posttest": "david || true",
@@ -12,19 +12,19 @@
   },
   "license": "ISC",
   "dependencies": {
-    "bene-logger": "^1.1.0",
-    "config": "1.20.1",
-    "highland": "2.7.4",
+    "bene-logger": "1.1.0",
+    "config": "1.21.0",
+    "highland": "2.8.1",
     "morgan": "1.7.0",
     "ps-direct-sdk": "3.0.3",
     "ramda": "0.21.0",
-    "restify": "4.0.4",
-    "winston": "2.2.0"
+    "restify": "4.1.0"
   },
   "devDependencies": {
     "chai": "3.5.0",
     "jshint": "2.9.2",
     "mocha": "2.5.3",
+    "istanbul": "0.4.3",
     "rewire": "2.5.1",
     "sinon": "1.17.4",
     "supertest": "1.2.0",
