@@ -87,7 +87,7 @@ describe('v1 api', () => {
         it('should get string data saved in redis', (done) => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
-                    .get('/v1/hello/world2')
+                    .get('/v1/hello/world')
                     .expect(200, "my value")
                     .end(done);
             });
