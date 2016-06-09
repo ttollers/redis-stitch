@@ -4,7 +4,7 @@
   "description": "Directly ",
   "main": "index.js",
   "scripts": {
-    "test": "istanbul cover --report lcov --print detail _mocha -- -R spec --recursive test/",
+    "test": "istanbul cover _mocha -- -R spec --recursive test/",
     "lint": "jshint index.js db.js lib/",
     "pretest": "npm run lint",
     "posttest": "david || true"

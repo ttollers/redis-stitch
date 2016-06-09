@@ -57,20 +57,7 @@ var del = hl.wrapCallback((key, cb) => {
 });
 
 describe('v1 api', () => {
-
-    // before(() => {
-    //     var origStdoutWrite = process.stdout.write;
-    //     var logFilterPattern = /(error\:)|(info\:)|(ResourceNotFoundError)/;
-    //
-    //     //filter log output
-    //     sinon.stub(process.stdout, 'write', function() {
-    //         var args = Array.prototype.slice.call(arguments);
-    //         if (!logFilterPattern.test(args[0])) {
-    //             return origStdoutWrite.apply(process.stdout, args);
-    //         }
-    //     });
-    // });
-    //
+    
     after(()=> {
         process.stdout.write.restore();
         process.stderr.write.restore();
@@ -100,7 +87,7 @@ describe('v1 api', () => {
         it('should get string data saved in redis', (done) => {
             set("/v1/hello/world", "my value").pull(() => {
                 request
-                    .get('/v1/hello/world')
+                    .get('/v1/hello/world2')
                     .expect(200, "my value")
                     .end(done);
             });

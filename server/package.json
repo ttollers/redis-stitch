@@ -4,7 +4,7 @@
   "description": "Server component for the presentation service",
   "main": "server.js",
   "scripts": {
-    "test": "istanbul cover --report lcov --print detail _mocha -- -R spec --recursive test/",
+    "test": "istanbul cover _mocha -- -R spec --recursive test/",
     "lint": "jshint server.js lib/",
     "pretest": "npm run lint",
     "posttest": "david || true",
