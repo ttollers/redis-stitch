@@ -1,6 +1,6 @@
 {
   "name": "presentation-service-server",
-  "version": "2.1.13",
+  "version": "2.1.14",
   "description": "Server component for the presentation service",
   "main": "server.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "dependencies": {
     "bene-logger": "^1.1.0",
     "config": "1.20.1",
-    "highland": "2.7.4",
+    "highland": "2.9.0",
     "morgan": "1.7.0",
     "ps-direct-sdk": "3.0.3",
     "ramda": "0.21.0",
@@ -25,8 +25,8 @@
     "chai": "3.5.0",
     "jshint": "2.9.2",
     "mocha": "2.5.3",
-    "rewire": "2.5.1",
-    "sinon": "1.17.4",
+    "rewire": "2.5.2",
+    "sinon": "1.17.5",
     "supertest": "1.2.0",
     "david": "7.0.2"
   }
