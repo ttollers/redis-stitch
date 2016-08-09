@@ -178,6 +178,6 @@ function escapeSpecialChars(str) {
         .replace(/\r/g, "\\\\r")
         .replace(/\t/g, "\\\\t")
         .replace(/\f/g, "\\\\f");
-};
+}
 
 module.exports = hydrateString;

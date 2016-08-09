@@ -10,11 +10,11 @@ module.exports = function (config) {
     var db = database(config);
     return {
         put: (key, value) => {
-            if(!R.is(String, value)) return hl(push => push("WrongType"))
+            if(!R.is(String, value)) return hl(push => push("WrongType"));
             else return db.setKey(key, value);
         },
         putObject: (key, value) => {
-          return db.setKey(key, stringify(value))  
+          return db.setKey(key, stringify(value));
         },
         del: db.delKey,
         add: db.addToKey,
@@ -24,5 +24,5 @@ module.exports = function (config) {
                 : db.delFromKeyByScore(key, Number(value));
         },
         get: key => hydrateString(db, {}, "${" + key + "}")
-    }
+    };
 };

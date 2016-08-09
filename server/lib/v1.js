@@ -2,7 +2,7 @@
 
 const R = require('ramda');
 const hl = require('highland');
-const restify = require('restify');
+var restify = require('restify');
 const BeneLogger = require('bene-logger');
 
 const logger = new BeneLogger();
