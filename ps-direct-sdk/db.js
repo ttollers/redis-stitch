@@ -9,7 +9,7 @@ const logger = new BeneLogger();
 
 module.exports = function (config) {
     var client = R.isNil(config) ? initFakeRedis() : initRealRedis(config);
-    logger.verbose('Initialised connection to database');
+    logger.info('Initialised connection to database');
 
     return {
         getKey: (key) => {
